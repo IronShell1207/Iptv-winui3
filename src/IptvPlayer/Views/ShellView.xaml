@@ -44,16 +44,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Кастомный заголовок окна: перетаскивание за всю полосу -->
-        <Grid x:Name="TitleBarArea" Grid.Row="0" Height="40" Background="Transparent">
-            <TextBlock
-                Margin="16,0,0,0"
-                VerticalAlignment="Center"
-                FontSize="12"
-                Foreground="{ThemeResource AppTextTertiaryBrush}"
-                Text="IPTV Client" />
-        </Grid>
-
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -184,12 +174,24 @@
             <!-- Контент -->
             <Frame x:Name="ContentFrame" Grid.Column="1" />
 
-            <!-- Плеер поверх всего -->
-            <views:PlayerView
-                x:Name="Player"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Visibility="{x:Bind ViewModel.IsPlayerActive, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+        </Grid>
+
+        <!-- Плеер поверх всего, включая полосу заголовка: видео занимает всё окно -->
+        <views:PlayerView
+            x:Name="Player"
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            Visibility="{x:Bind ViewModel.IsPlayerActive, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+
+        <!-- Полоса заголовка лежит поверх видео: за неё тащится окно -->
+        <Grid x:Name="TitleBarArea" Grid.Row="0" Height="40" Background="Transparent">
+            <TextBlock
+                Margin="16,0,0,0"
+                VerticalAlignment="Center"
+                FontSize="12"
+                Foreground="{ThemeResource AppTextTertiaryBrush}"
+                Text="IPTV Client"
+                Visibility="{x:Bind ViewModel.IsPlayerActive, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
         </Grid>
     </Grid>
 </UserControl>

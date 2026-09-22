@@ -49,6 +49,9 @@ public sealed partial class MainWindow : Window
 
     private void OnFullScreenRequested(object? sender, bool fullScreen)
     {
+        Shell.SetTitleBarVisible(!fullScreen);
+        SetTitleBar(fullScreen ? null : Shell.TitleBar);
+
         if (fullScreen)
         {
             AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);

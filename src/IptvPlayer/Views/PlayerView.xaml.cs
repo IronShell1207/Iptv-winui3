@@ -79,6 +79,16 @@ public sealed partial class PlayerView : UserControl
 
     public double VolumeOsdOpacity => ViewModel.IsVolumeOsdVisible ? 1 : 0;
 
+    /// <summary>В окне часы уступают место кнопкам заголовка, в полный экран — поднимаются.</summary>
+    public Thickness ClockMargin => ViewModel.IsFullScreen
+        ? new Thickness(0, 24, 32, 0)
+        : new Thickness(0, 52, 32, 0);
+
+    /// <summary>Кнопка выхода нужна только в полноэкранном режиме и вместе с панелями.</summary>
+    public bool ShowExitFullScreen => ViewModel.IsFullScreen && ViewModel.AreControlsVisible;
+
+    public double ExitFullScreenOpacity => ShowExitFullScreen ? 1 : 0;
+
     /// <summary>Высота заполненной части шкалы: 176 — высота дорожки в разметке.</summary>
     public double VolumeBarHeight => 176 * Math.Clamp(ViewModel.VolumePercent, 0, 100) / 100.0;
 

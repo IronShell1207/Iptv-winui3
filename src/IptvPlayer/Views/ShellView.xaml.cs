@@ -45,6 +45,13 @@ public sealed partial class ShellView : UserControl
     /// <summary>Полоса, за которую тащится окно — её окно отдаёт в SetTitleBar.</summary>
     public UIElement TitleBar => TitleBarArea;
 
+    /// <summary>
+    /// В полноэкранном режиме полоса заголовка не нужна: она невидима, но
+    /// перехватывает клики как область перетаскивания окна.
+    /// </summary>
+    public void SetTitleBarVisible(bool visible)
+        => TitleBarArea.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+
     public PlayerViewModel PlayerViewModel => _player;
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
