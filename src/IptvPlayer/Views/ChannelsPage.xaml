@@ -44,8 +44,10 @@
                             FontSize="16"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AppTextTertiaryBrush}"
-                            Text="{x:Bind Initials}" />
+                            Text="{x:Bind Initials}"
+                            Visibility="{x:Bind HasLogo, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
                         <Image
+                            Margin="6,5"
                             Source="{x:Bind LogoPath, Mode=OneWay, Converter={StaticResource PathToImage}}"
                             Stretch="Uniform" />
                     </Grid>

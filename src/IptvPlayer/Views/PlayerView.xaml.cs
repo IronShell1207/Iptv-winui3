@@ -17,6 +17,9 @@ public sealed partial class PlayerView : UserControl
         // handledEventsToo: движение над видео и кнопками тоже должно будить панели
         AddHandler(PointerMovedEvent, new PointerEventHandler(OnPointerMoved), handledEventsToo: true);
         DoubleTapped += OnDoubleTapped;
+
+        SizeChanged += (_, _) => UpdateLayoutInsets();
+        ChannelPanel.SizeChanged += (_, _) => UpdateLayoutInsets();
     }
 
     /// <summary>Модель приходит из окна, а не из DI напрямую — контрол создаётся разметкой.</summary>
@@ -27,6 +30,7 @@ public sealed partial class PlayerView : UserControl
 
         VideoElement.SetMediaPlayer(viewModel.Player);
         UpdatePanelPosition();
+        UpdateLayoutInsets();
         Bindings.Update();
     }
 
@@ -37,6 +41,17 @@ public sealed partial class PlayerView : UserControl
 
     /// <summary>Панель каналов живёт своей жизнью: наведение к краю или закрепление кнопкой.</summary>
     public double ChannelPanelOpacity => ViewModel.IsChannelPanelOpen ? 1 : 0;
+
+    /// <summary>Отступы блока с названием канала: он уступает место открытой панели.</summary>
+    public Thickness InfoMargin { get; private set; } = new(40, 40, 32, 0);
+
+    /// <summary>Кнопки управления центрируются по свободной части кадра, а не по всему окну.</summary>
+    public Thickness ControlsMargin { get; private set; } = new(0, 26, 0, 30);
+
+    /// <summary>На узком окне «далее» уступает место названию канала.</summary>
+    public bool ShowNextBlock => ViewModel.HasNext && ActualWidth >= NextBlockMinWidth;
+
+    private const double NextBlockMinWidth = 1000;
 
     public string PlayPauseGlyph => ViewModel.IsPlaying ? "Pause" : "Play";
 
@@ -51,8 +66,12 @@ public sealed partial class PlayerView : UserControl
             case nameof(PlayerViewModel.AreControlsVisible):
                 OnPropertyChangedLocal(nameof(ChromeOpacity));
                 break;
+            case nameof(PlayerViewModel.NextTitle):
+                OnPropertyChangedLocal(nameof(ShowNextBlock));
+                break;
             case nameof(PlayerViewModel.IsChannelPanelOpen):
                 UpdatePanelPosition();
+                UpdateLayoutInsets();
                 OnPropertyChangedLocal(nameof(ChannelPanelOpacity));
                 break;
             case nameof(PlayerViewModel.IsPlaying):
@@ -78,6 +97,28 @@ public sealed partial class PlayerView : UserControl
     }
 
     /// <summary>Скрытая панель отъезжает влево — так возврат читается как выезд, а не вспышка.</summary>
+    /// <summary>
+    /// Пересчитывает отступы под текущую ширину окна и состояние панели каналов.
+    /// На узком окне панель накрывает кадр целиком, сдвигать содержимое некуда —
+    /// тогда отступы остаются базовыми.
+    /// </summary>
+    private void UpdateLayoutInsets()
+    {
+        var panelWidth = ChannelPanel.ActualWidth + ChannelPanel.Margin.Left + 40;
+        var available = ActualWidth;
+
+        var shifted = ViewModel.IsChannelPanelOpen
+                      && available > 0
+                      && panelWidth < available * 0.55;
+
+        var left = shifted ? panelWidth : 40;
+
+        InfoMargin = new Thickness(left, 40, 32, 0);
+        ControlsMargin = new Thickness(shifted ? panelWidth : 0, 26, 0, 30);
+
+        Bindings.Update();
+    }
+
     private void UpdatePanelPosition()
         => ChannelPanel.Translation = ViewModel.IsChannelPanelOpen
             ? new System.Numerics.Vector3(0, 0, 0)

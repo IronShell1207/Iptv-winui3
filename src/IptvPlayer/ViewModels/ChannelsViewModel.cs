@@ -211,7 +211,13 @@ public sealed partial class ChannelsViewModel : ObservableObject
                 content.EpgUrl,
                 TimeSpan.FromHours(Math.Max(1, _settings.Current.EpgCacheHours)));
 
-            if (ok) _dispatcher.TryEnqueue(RefreshEpgLabels);
+            if (!ok) return;
+
+            _dispatcher.TryEnqueue(() =>
+            {
+                RefreshEpgLabels();
+                _ = LoadLogosAsync();   // телепрограмма приносит логотипы для каналов без tvg-logo
+            });
         }
         catch (Exception ex)
         {
@@ -219,11 +225,17 @@ public sealed partial class ChannelsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Логотип берётся из tvg-logo, а если его нет — из &lt;icon&gt; телепрограммы:
+    /// у большинства плейлистов ссылок на логотипы нет, а в XMLTV они есть.
+    /// </summary>
     private async Task LoadLogosAsync()
     {
         foreach (var item in _all.ToList())
         {
-            var url = item.Channel.LogoUrl;
+            if (item.LogoPath is not null) continue;
+
+            var url = item.Channel.LogoUrl ?? _epg.Describe(item.TvgId)?.IconUrl;
             if (string.IsNullOrWhiteSpace(url)) continue;
 
             var cached = _logos.TryGetCached(url);

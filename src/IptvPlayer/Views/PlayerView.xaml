@@ -35,10 +35,12 @@
                             FontSize="16"
                             FontWeight="SemiBold"
                             Foreground="{ThemeResource AppTextTertiaryBrush}"
-                            Text="{x:Bind Initials}" />
+                            Text="{x:Bind Initials}"
+                            Visibility="{x:Bind HasLogo, Mode=OneWay, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" />
                         <Image
+                            Margin="6,5"
                             Source="{x:Bind LogoPath, Mode=OneWay, Converter={StaticResource PathToImage}}"
-                            Stretch="UniformToFill" />
+                            Stretch="Uniform" />
                     </Grid>
                 </Border>
 
@@ -78,6 +80,71 @@
     </UserControl.Resources>
 
     <Grid x:Name="Root" Background="#05080F">
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="WidthStates">
+
+                <!-- Узкое окно: панель уже, второстепенное убрано -->
+                <VisualState x:Name="NarrowState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ChannelPanel.Width" Value="288" />
+                        <Setter Target="ChannelPanel.Margin" Value="12,12,0,12" />
+                        <Setter Target="ChannelNameText.FontSize" Value="24" />
+                        <Setter Target="ClockTimeText.FontSize" Value="22" />
+                        <Setter Target="MoreButton.Visibility" Value="Collapsed" />
+                        <Setter Target="PipButton.Visibility" Value="Collapsed" />
+                        <Setter Target="ControlsPanel.Spacing" Value="10" />
+                    </VisualState.Setters>
+                </VisualState>
+
+                <!-- Среднее окно -->
+                <VisualState x:Name="MediumState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1000" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ChannelPanel.Width" Value="360" />
+                        <Setter Target="ChannelNameText.FontSize" Value="28" />
+                        <Setter Target="ClockTimeText.FontSize" Value="26" />
+                        <Setter Target="ControlsPanel.Spacing" Value="14" />
+                    </VisualState.Setters>
+                </VisualState>
+
+                <!-- Широкое окно: макет как в исходном оформлении -->
+                <VisualState x:Name="WideState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1360" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ChannelPanel.Width" Value="416" />
+                        <Setter Target="ChannelNameText.FontSize" Value="34" />
+                        <Setter Target="ClockTimeText.FontSize" Value="30" />
+                        <Setter Target="ControlsPanel.Spacing" Value="16" />
+                    </VisualState.Setters>
+                </VisualState>
+
+            </VisualStateGroup>
+
+            <VisualStateGroup x:Name="HeightStates">
+                <VisualState x:Name="ShortState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowHeight="0" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ClockPanel.Visibility" Value="Collapsed" />
+                    </VisualState.Setters>
+                </VisualState>
+
+                <VisualState x:Name="TallState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowHeight="560" />
+                    </VisualState.StateTriggers>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
 
         <!-- Видео -->
         <MediaPlayerElement
@@ -141,6 +208,7 @@
 
         <!-- Часы в правом верхнем углу -->
         <StackPanel
+            x:Name="ClockPanel"
             Margin="0,24,32,0"
             HorizontalAlignment="Right"
             VerticalAlignment="Top"
@@ -150,6 +218,7 @@
                 <ScalarTransition Duration="0:0:0.2" />
             </StackPanel.OpacityTransition>
             <TextBlock
+                x:Name="ClockTimeText"
                 HorizontalAlignment="Right"
                 FontSize="30"
                 FontWeight="SemiLight"
@@ -391,6 +460,7 @@
             </Button>
 
             <Button
+                x:Name="PipButton"
                 Width="48"
                 Height="48"
                 Command="{x:Bind ViewModel.ToggleCompactOverlayCommand}"
@@ -432,8 +502,9 @@
 
             <!-- Информация о канале и передаче -->
             <Grid
+                x:Name="InfoGrid"
                 Grid.Row="0"
-                Margin="484,40,32,0"
+                Margin="{x:Bind InfoMargin, Mode=OneWay}"
                 ColumnSpacing="40">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -456,6 +527,7 @@
                     </StackPanel>
 
                     <TextBlock
+                        x:Name="ChannelNameText"
                         FontSize="34"
                         FontWeight="SemiBold"
                         Foreground="White"
@@ -502,12 +574,13 @@
 
                 <!-- Далее -->
                 <Border
+                    x:Name="NextBlock"
                     Grid.Column="1"
                     Padding="24,0,0,0"
                     VerticalAlignment="Bottom"
                     BorderBrush="#33FFFFFF"
                     BorderThickness="1,0,0,0"
-                    Visibility="{x:Bind ViewModel.HasNext, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    Visibility="{x:Bind ShowNextBlock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
                     <Grid ColumnSpacing="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -544,13 +617,15 @@
 
             <!-- Кнопки управления -->
             <StackPanel
+                x:Name="ControlsPanel"
                 Grid.Row="1"
-                Margin="0,26,0,30"
+                Margin="{x:Bind ControlsMargin, Mode=OneWay}"
                 HorizontalAlignment="Center"
                 Orientation="Horizontal"
                 Spacing="16">
 
                 <Button
+                    x:Name="MoreButton"
                     Width="48"
                     Height="48"
                     Click="OnMoreClick"
