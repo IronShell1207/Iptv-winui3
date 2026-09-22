@@ -31,6 +31,18 @@ public sealed record AppSettings
     public VideoFitMode VideoFit { get; init; } = VideoFitMode.Fit;
     public bool DownmixToStereo { get; init; } = true;
 
+    /// <summary>Папка для записей эфира. Пусто — подпапка в «Видео».</summary>
+    public string? RecordingsFolder { get; init; }
+
+    /// <summary>Запас после конца передачи при записи по телепрограмме, минут.</summary>
+    public int RecordingPaddingMinutes { get; init; } = 3;
+
+    /// <summary>Писать эфир в буфер, чтобы его можно было отмотать назад.</summary>
+    public bool TimeshiftEnabled { get; init; }
+
+    /// <summary>Глубина буфера отмотки, минут.</summary>
+    public int TimeshiftMinutes { get; init; } = 30;
+
     /// <summary>Время жизни кэша EPG, часов.</summary>
     public int EpgCacheHours { get; init; } = 6;
     public string LogLevel { get; init; } = "Information";

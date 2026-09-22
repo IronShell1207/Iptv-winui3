@@ -12,13 +12,19 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly SettingsService _settings;
     private readonly LogoCacheService _logos;
     private readonly PlaylistService _playlists;
+    private readonly RecordingService _recordings;
     private bool _loading;
 
-    public SettingsViewModel(SettingsService settings, LogoCacheService logos, PlaylistService playlists)
+    public SettingsViewModel(
+        SettingsService settings,
+        LogoCacheService logos,
+        PlaylistService playlists,
+        RecordingService recordings)
     {
         _settings = settings;
         _logos = logos;
         _playlists = playlists;
+        _recordings = recordings;
 
         Load();
     }
@@ -49,6 +55,18 @@ public sealed partial class SettingsViewModel : ObservableObject
     public partial string LogLevel { get; set; } = "Information";
 
     [ObservableProperty]
+    public partial string RecordingsFolder { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial int RecordingPaddingMinutes { get; set; } = 3;
+
+    [ObservableProperty]
+    public partial bool TimeshiftEnabled { get; set; }
+
+    [ObservableProperty]
+    public partial int TimeshiftMinutes { get; set; } = 30;
+
+    [ObservableProperty]
     public partial string? CheckResult { get; set; }
 
     [ObservableProperty]
@@ -77,6 +95,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         ResumeLastChannel = s.ResumeLastChannel;
         EpgCacheHours = s.EpgCacheHours;
         LogLevel = s.LogLevel;
+        RecordingsFolder = string.IsNullOrWhiteSpace(s.RecordingsFolder)
+            ? AppPaths.DefaultRecordingsFolder
+            : s.RecordingsFolder;
+        RecordingPaddingMinutes = s.RecordingPaddingMinutes;
+        TimeshiftEnabled = s.TimeshiftEnabled;
+        TimeshiftMinutes = s.TimeshiftMinutes;
 
         _loading = false;
     }
@@ -99,7 +123,13 @@ public sealed partial class SettingsViewModel : ObservableObject
             ResumeLastChannel = ResumeLastChannel,
             EpgCacheHours = Math.Clamp(EpgCacheHours, 1, 72),
             LogLevel = LogLevel,
+            RecordingsFolder = RecordingsFolder,
+            RecordingPaddingMinutes = Math.Clamp(RecordingPaddingMinutes, 0, 30),
+            TimeshiftEnabled = TimeshiftEnabled,
+            TimeshiftMinutes = Math.Clamp(TimeshiftMinutes, 5, 240),
         });
+
+        _recordings.OutputFolder = RecordingsFolder;
     }
 
     partial void OnUdpxyBaseUrlChanged(string value) => Save();
@@ -110,6 +140,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     partial void OnResumeLastChannelChanged(bool value) => Save();
     partial void OnEpgCacheHoursChanged(int value) => Save();
     partial void OnLogLevelChanged(string value) => Save();
+    partial void OnRecordingsFolderChanged(string value) => Save();
+    partial void OnRecordingPaddingMinutesChanged(int value) => Save();
+    partial void OnTimeshiftEnabledChanged(bool value) => Save();
+    partial void OnTimeshiftMinutesChanged(int value) => Save();
+
+    public string TimeshiftHint =>
+        "Буфер пишется вторым соединением к udpxy, поэтому канал идёт с роутера дважды. "
+        + "На проводной сети это незаметно, по Wi-Fi лучше держать выключенным.";
 
     [RelayCommand]
     private async Task CheckUdpxyAsync()

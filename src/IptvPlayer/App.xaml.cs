@@ -98,6 +98,11 @@ public partial class App : Application
             return http;
         });
 
+        services.AddSingleton(sp => new StreamRecorder(
+            sp.GetRequiredService<HttpClient>(),
+            sp.GetService<ILoggerFactory>()?.CreateLogger<StreamRecorder>()));
+        services.AddSingleton<RecordingService>();
+        services.AddSingleton<TimeshiftService>();
         services.AddSingleton<PlaylistService>();
         services.AddSingleton<EpgService>();
         services.AddSingleton<FavoritesService>();
@@ -110,6 +115,7 @@ public partial class App : Application
         services.AddSingleton<PlayerViewModel>();
         services.AddSingleton<EpgViewModel>();
         services.AddSingleton<SettingsViewModel>();
+        services.AddSingleton<RecordingsViewModel>();
 
         services.AddSingleton<MainWindow>();
 
@@ -135,6 +141,8 @@ public partial class App : Application
 
     public void Shutdown()
     {
+        Services?.GetService<RecordingService>()?.StopAll();
+        Services?.GetService<TimeshiftService>()?.Dispose();
         Services?.GetService<PlaybackService>()?.Dispose();
         _fileLogger?.Dispose();
     }

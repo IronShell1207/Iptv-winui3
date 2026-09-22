@@ -27,6 +27,8 @@ public sealed partial class PlayerViewModel : ObservableObject
     private readonly ChannelsViewModel _channels;
     private readonly EpgService _epg;
     private readonly SettingsService _settings;
+    private readonly RecordingService _recordings;
+    private readonly TimeshiftService _timeshift;
     private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
 
     private DispatcherQueueTimer? _hideTimer;
@@ -42,13 +44,19 @@ public sealed partial class PlayerViewModel : ObservableObject
         PlaybackService playback,
         ChannelsViewModel channels,
         EpgService epg,
-        SettingsService settings)
+        SettingsService settings,
+        RecordingService recordings,
+        TimeshiftService timeshift)
     {
         _playback = playback;
         _channels = channels;
         _epg = epg;
         _settings = settings;
+        _recordings = recordings;
+        _timeshift = timeshift;
 
+        _recordings.Changed += (_, _) => _dispatcher.TryEnqueue(RefreshRecordingState);
+        _playback.FileEnded += (_, _) => _dispatcher.TryEnqueue(() => _ = GoLiveAsync());
         _playback.StatusChanged += OnPlaybackStatusChanged;
         _playback.Player.PlaybackSession.PlaybackStateChanged += OnPlaybackStateChanged;
 
@@ -111,6 +119,22 @@ public sealed partial class PlayerViewModel : ObservableObject
     [ObservableProperty]
     public partial string? Toast { get; set; }
 
+    /// <summary>Идёт запись текущего канала.</summary>
+    [ObservableProperty]
+    public partial bool IsRecording { get; set; }
+
+    /// <summary>Сколько уже пишется — подпись рядом с красной точкой.</summary>
+    [ObservableProperty]
+    public partial string? RecordingCaption { get; set; }
+
+    /// <summary>Эфир отмотан назад и играет из буфера.</summary>
+    [ObservableProperty]
+    public partial bool IsTimeshifted { get; set; }
+
+    /// <summary>Насколько мы отстаём от эфира.</summary>
+    [ObservableProperty]
+    public partial string? TimeshiftCaption { get; set; }
+
     /// <summary>Шкала громкости у правого края — при изменении с клавиатуры и кнопок.</summary>
     [ObservableProperty]
     public partial bool IsVolumeOsdVisible { get; set; }
@@ -145,7 +169,10 @@ public sealed partial class PlayerViewModel : ObservableObject
     [ObservableProperty]
     public partial string? NextTimeRange { get; set; }
 
-    public string ChannelName => Current?.Name ?? "Канал не выбран";
+    public string ChannelName => Current?.Name ?? RecordingTitle ?? "Канал не выбран";
+
+    /// <summary>Идёт запись из файла, а не эфир.</summary>
+    public bool IsRecordingPlayback => RecordingTitle is not null;
 
     public string? ChannelGroup => Current?.Group;
 
@@ -164,6 +191,12 @@ public sealed partial class PlayerViewModel : ObservableObject
 
     /// <summary>Пользователь закрыл плеер — вернуться к списку.</summary>
     public event EventHandler? CloseRequested;
+
+    partial void OnRecordingTitleChanged(string? value)
+    {
+        OnPropertyChanged(nameof(ChannelName));
+        OnPropertyChanged(nameof(IsRecordingPlayback));
+    }
 
     partial void OnCurrentChanged(ChannelItemViewModel? value)
     {
@@ -201,6 +234,25 @@ public sealed partial class PlayerViewModel : ObservableObject
 
     partial void OnIsCompactOverlayChanged(bool value) => CompactOverlayRequested?.Invoke(this, value);
 
+    /// <summary>Открывает сохранённую запись: у файла есть длительность и перемотка.</summary>
+    public async Task PlayRecordingAsync(Recording recording)
+    {
+        Current = null;
+        IsTimeshifted = false;
+        TimeshiftCaption = null;
+        ErrorMessage = null;
+        RecordingTitle = recording.Title;
+
+        _timeshift.Stop();
+        ShowControls();
+
+        await _playback.PlayFileAsync(recording.FilePath);
+    }
+
+    /// <summary>Название открытой записи, если сейчас играет не эфир.</summary>
+    [ObservableProperty]
+    public partial string? RecordingTitle { get; set; }
+
     /// <summary>Открыть канал в плеере.</summary>
     public async Task PlayAsync(ChannelItemViewModel item)
     {
@@ -208,6 +260,7 @@ public sealed partial class PlayerViewModel : ObservableObject
             _previousChannel = previous;
 
         Current = item;
+        RecordingTitle = null;
         ErrorMessage = null;
         StatusMessage = "Подключение…";
         ShowControls();
@@ -222,7 +275,32 @@ public sealed partial class PlayerViewModel : ObservableObject
         });
 
         await _playback.PlayAsync(item.Channel);
+
+        StartTimeshiftBuffer(item);
+        RefreshRecordingState();
     }
+
+    /// <summary>
+    /// Буфер отмотки пишется вторым соединением, поэтому включается только
+    /// когда его попросили в настройках: иначе роутер зря отдаёт поток дважды.
+    /// </summary>
+    private void StartTimeshiftBuffer(ChannelItemViewModel item)
+    {
+        IsTimeshifted = false;
+        TimeshiftCaption = null;
+
+        if (!_settings.Current.TimeshiftEnabled)
+        {
+            _timeshift.Stop();
+            return;
+        }
+
+        _timeshift.Depth = TimeSpan.FromMinutes(Math.Clamp(_settings.Current.TimeshiftMinutes, 5, 240));
+        _timeshift.Start(item.Channel, ResolveUrl(item.Channel));
+    }
+
+    private string ResolveUrl(Channel channel) => StreamUrlResolver.Resolve(
+        channel.Url, _settings.Current.SourceMode, _settings.Current.UdpxyBaseUrl);
 
     [RelayCommand]
     private void TogglePlayPause()
@@ -351,6 +429,144 @@ public sealed partial class PlayerViewModel : ObservableObject
         OnPropertyChanged(nameof(IsFavorite));
     }
 
+    /// <summary>Пишет канал, пока не остановят кнопкой.</summary>
+    [RelayCommand]
+    private void RecordManually()
+    {
+        if (Current is null) return;
+
+        if (_recordings.ActiveFor(Current.Key) is { } active)
+        {
+            _recordings.Stop(active.Id);
+            ShowToast("Запись остановлена");
+            return;
+        }
+
+        var recording = _recordings.Start(
+            Current.Channel, ResolveUrl(Current.Channel), NowTitle, stopsAt: null, RecordingMode.Manual);
+
+        ShowToast($"Идёт запись: {recording.ChannelName}");
+        RefreshRecordingState();
+    }
+
+    /// <summary>Пишет текущую передачу и останавливается сама по телепрограмме.</summary>
+    [RelayCommand]
+    private void RecordProgramme()
+    {
+        if (Current is null) return;
+
+        var programme = _epg.NowOn(Current.TvgId, DateTimeOffset.Now);
+        if (programme is null)
+        {
+            ShowToast("Для этого канала нет телепрограммы");
+            return;
+        }
+
+        var deadline = RecordingService.DeadlineFor(programme, _settings.Current.RecordingPaddingMinutes);
+
+        _recordings.Start(
+            Current.Channel, ResolveUrl(Current.Channel), programme.Title, deadline, RecordingMode.Scheduled);
+
+        ShowToast($"Запись до {deadline:HH:mm}: {programme.Title}");
+        RefreshRecordingState();
+    }
+
+    private void RefreshRecordingState()
+    {
+        var active = _recordings.ActiveFor(Current?.Key);
+
+        IsRecording = active is not null;
+        RecordingCaption = active is null
+            ? null
+            : $@"{active.Duration:hh\:mm\:ss}  ·  {active.SizeBytes / 1024.0 / 1024.0:F0} МБ";
+    }
+
+    // --- отмотка назад ---
+
+    public bool CanTimeshift => _timeshift.IsRunning;
+
+    /// <summary>Отматывает эфир назад на полминуты.</summary>
+    [RelayCommand]
+    private Task SeekBack() => SeekRelativeAsync(TimeSpan.FromSeconds(-30));
+
+    [RelayCommand]
+    private Task SeekForward() => SeekRelativeAsync(TimeSpan.FromSeconds(30));
+
+    private async Task SeekRelativeAsync(TimeSpan delta)
+    {
+        if (!_timeshift.IsRunning)
+        {
+            ShowToast("Отмотка выключена в настройках");
+            return;
+        }
+
+        var target = CurrentAirTime + delta;
+
+        // вперёд дальше эфира не уйти
+        if (target >= DateTimeOffset.Now.AddSeconds(-2))
+        {
+            await GoLiveAsync();
+            return;
+        }
+
+        if (_timeshift.Earliest is { } earliest && target < earliest) target = earliest;
+
+        var located = _timeshift.Locate(target);
+        if (located is null)
+        {
+            ShowToast("Буфер ещё не накопился");
+            return;
+        }
+
+        await _playback.PlayFileAsync(located.Value.Segment.Path, located.Value.Offset);
+
+        _timeshiftBase = located.Value.Segment.StartedAt;
+        IsTimeshifted = true;
+        UpdateTimeshiftCaption();
+        ShowControls();
+    }
+
+    /// <summary>Возвращает к прямому эфиру.</summary>
+    [RelayCommand]
+    private async Task GoLive()
+    {
+        await GoLiveAsync();
+    }
+
+    private async Task GoLiveAsync()
+    {
+        if (Current is null) return;
+
+        IsTimeshifted = false;
+        TimeshiftCaption = null;
+
+        await _playback.PlayAsync(Current.Channel);
+        ShowControls();
+    }
+
+    /// <summary>Момент эфира, который сейчас на экране.</summary>
+    private DateTimeOffset CurrentAirTime => IsTimeshifted
+        ? _timeshiftBase + _playback.Player.PlaybackSession.Position
+        : DateTimeOffset.Now;
+
+    private DateTimeOffset _timeshiftBase;
+
+    private void UpdateTimeshiftCaption()
+    {
+        if (!IsTimeshifted)
+        {
+            TimeshiftCaption = null;
+            return;
+        }
+
+        var behind = DateTimeOffset.Now - CurrentAirTime;
+        if (behind < TimeSpan.Zero) behind = TimeSpan.Zero;
+
+        TimeshiftCaption = behind.TotalHours >= 1
+            ? $@"−{behind:h\:mm\:ss}"
+            : $@"−{behind:mm\:ss}";
+    }
+
     [RelayCommand]
     private async Task Retry()
     {
@@ -368,6 +584,9 @@ public sealed partial class PlayerViewModel : ObservableObject
     {
         IsChannelPanelPinned = false;
         IsChannelPanelOpen = false;
+        IsTimeshifted = false;
+        TimeshiftCaption = null;
+        _timeshift.Stop();
 
         _playback.Stop();
         Current = null;
@@ -450,6 +669,8 @@ public sealed partial class PlayerViewModel : ObservableObject
         ClockTime = now.ToString("HH:mm");
         ClockDate = now.ToString("ddd, d MMM", System.Globalization.CultureInfo.CurrentCulture);
         UpdateEpg();
+        RefreshRecordingState();
+        UpdateTimeshiftCaption();
     }
 
     private void UpdateEpg()

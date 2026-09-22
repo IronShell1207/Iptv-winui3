@@ -77,6 +77,22 @@ public sealed partial class PlayerView : UserControl, INotifyPropertyChanged
 
     public double ToastOpacity => ViewModel.Toast is null ? 0 : 1;
 
+    /// <summary>Пока эфир отмотан, надпись LIVE меняется на отставание.</summary>
+    public string LiveCaption => ViewModel.IsTimeshifted ? ViewModel.TimeshiftCaption ?? "ЗАПИСЬ" : "LIVE";
+
+    public string ReturnToLiveCaption => "В эфир";
+
+    /// <summary>Кнопки отмотки показываются, только когда буфер действительно пишется.</summary>
+    public Visibility TimeshiftVisibility => ViewModel.CanTimeshift ? Visibility.Visible : Visibility.Collapsed;
+
+    public string RecordGlyph => ViewModel.IsRecording ? "RecordStop" : "Record";
+
+    public Brush RecordBrush => ViewModel.IsRecording
+        ? new SolidColorBrush(Microsoft.UI.Colors.OrangeRed)
+        : new SolidColorBrush(Microsoft.UI.Colors.White);
+
+    public string ManualRecordText => ViewModel.IsRecording ? "Остановить запись" : "Записать вручную";
+
     public double VolumeOsdOpacity => ViewModel.IsVolumeOsdVisible ? 1 : 0;
 
     /// <summary>В окне часы уступают место кнопкам заголовка, в полный экран — поднимаются.</summary>
@@ -139,6 +155,13 @@ public sealed partial class PlayerView : UserControl, INotifyPropertyChanged
 
             case nameof(PlayerViewModel.Toast):
                 OnPropertyChangedLocal(nameof(ToastOpacity));
+                break;
+
+            case nameof(PlayerViewModel.IsRecording):
+            case nameof(PlayerViewModel.RecordingCaption):
+            case nameof(PlayerViewModel.IsTimeshifted):
+            case nameof(PlayerViewModel.TimeshiftCaption):
+                OnPropertyChangedLocal(nameof(LiveCaption));
                 break;
         }
     }
@@ -307,6 +330,12 @@ public sealed partial class PlayerView : UserControl, INotifyPropertyChanged
     }
 
     private void OnMoreClick(object sender, RoutedEventArgs e) => ViewModel.ShowControls();
+
+    private void OnOpenRecordingsClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CloseCommand.Execute(null);
+        App.Current.MainWindow?.NavigateTo("recordings");
+    }
 
     private void OnCloseClick(object sender, RoutedEventArgs e)
         => ViewModel.CloseCommand.Execute(null);

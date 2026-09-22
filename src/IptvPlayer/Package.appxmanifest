@@ -43,6 +43,8 @@
     <!-- Плейлист и телепрограмма берутся из домашней сети, поэтому нужны обе -->
     <Capability Name="internetClient" />
     <Capability Name="privateNetworkClientServer" />
+    <!-- записи эфира кладём в «Видео» -->
+    <uap:Capability Name="videosLibrary" />
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
 

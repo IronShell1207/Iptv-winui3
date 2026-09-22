@@ -52,12 +52,19 @@ public sealed class PlaybackService : IDisposable
 
         Player.MediaFailed += OnMediaFailed;
         Player.MediaOpened += OnMediaOpened;
+        Player.MediaEnded += OnMediaEnded;
         Player.PlaybackSession.PlaybackStateChanged += OnPlaybackStateChanged;
     }
 
     public MediaPlayer Player { get; }
 
     public Channel? CurrentChannel { get; private set; }
+
+    /// <summary>Играет файл (запись или буфер отмотки), а не живой эфир.</summary>
+    public bool IsFilePlayback { get; private set; }
+
+    /// <summary>Файл доиграл до конца — для буфера это повод вернуться в эфир.</summary>
+    public event EventHandler? FileEnded;
 
     public PlaybackStatus Status { get; private set; } = PlaybackStatus.Idle;
 
@@ -104,6 +111,7 @@ public sealed class PlaybackService : IDisposable
             if (cts.IsCancellationRequested) return;
 
             CurrentChannel = channel;
+            IsFilePlayback = false;
             var url = StreamUrlResolver.Resolve(
                 channel.Url, _settings.Current.SourceMode, _settings.Current.UdpxyBaseUrl);
 
@@ -213,6 +221,70 @@ public sealed class PlaybackService : IDisposable
         return false;
     }
 
+    /// <summary>
+    /// Играет файл: запись эфира или отрезок буфера отмотки. В отличие от эфира
+    /// у файла есть длительность, поэтому доступна перемотка внутри него.
+    /// </summary>
+    public async Task PlayFileAsync(string path, TimeSpan startAt = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        if (!File.Exists(path))
+        {
+            Fail("Файл записи не найден.");
+            return;
+        }
+
+        var previous = Interlocked.Exchange(ref _currentSwitch, null);
+        previous?.Cancel();
+        previous?.Dispose();
+
+        var cts = new CancellationTokenSource();
+        _currentSwitch = cts;
+
+        await _switchGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            SetStatus(PlaybackStatus.Opening, null);
+
+            var config = new MediaSourceConfig();
+            config.Video.VideoDecoderMode = _settings.Current.HardwareDecoding
+                ? VideoDecoderMode.Automatic
+                : VideoDecoderMode.ForceSystemDecoder;
+            config.Audio.DownmixAudioStreamsToStereo = _settings.Current.DownmixToStereo;
+            config.General.SkipErrors = 50;
+
+            var newSource = await FFmpegMediaSource.CreateFromFileAsync(path, config)
+                .AsTask(cts.Token)
+                .ConfigureAwait(false);
+
+            cts.Token.ThrowIfCancellationRequested();
+
+            var old = _source;
+            _source = newSource;
+            IsFilePlayback = true;
+
+            Player.Source = newSource.CreateMediaPlaybackItem();
+            if (startAt > TimeSpan.Zero) Player.PlaybackSession.Position = startAt;
+            Player.Play();
+
+            old?.Dispose();
+            RequestDisplayActive();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Не удалось открыть файл {Path}", path);
+            Fail($"Файл не открылся: {ex.Message}");
+        }
+        finally
+        {
+            _switchGate.Release();
+        }
+    }
+
     public void Pause()
     {
         Player.Pause();
@@ -248,6 +320,11 @@ public sealed class PlaybackService : IDisposable
 
     private void OnMediaOpened(MediaPlayer sender, object args)
         => SetStatus(PlaybackStatus.Playing, null);
+
+    private void OnMediaEnded(MediaPlayer sender, object args)
+    {
+        if (IsFilePlayback) FileEnded?.Invoke(this, EventArgs.Empty);
+    }
 
     private void OnMediaFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args)
     {
@@ -322,6 +399,7 @@ public sealed class PlaybackService : IDisposable
 
         Player.MediaFailed -= OnMediaFailed;
         Player.MediaOpened -= OnMediaOpened;
+        Player.MediaEnded -= OnMediaEnded;
         Player.PlaybackSession.PlaybackStateChanged -= OnPlaybackStateChanged;
 
         ReleaseDisplayActive();

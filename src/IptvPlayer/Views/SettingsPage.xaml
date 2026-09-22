@@ -116,6 +116,70 @@
                 </StackPanel>
             </Border>
 
+            <!-- Запись и отмотка -->
+            <Border Padding="24" Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="18">
+                    <TextBlock
+                        FontSize="17"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AppTextPrimaryBrush}"
+                        Text="Запись эфира" />
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Папка для записей" />
+                        <TextBox Text="{x:Bind ViewModel.RecordingsFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Запас после конца передачи, минут" />
+                            <TextBlock
+                                HorizontalAlignment="Right"
+                                Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                Text="{x:Bind ViewModel.RecordingPaddingMinutes, Mode=OneWay}" />
+                        </Grid>
+                        <Slider
+                            Maximum="15"
+                            Minimum="0"
+                            StepFrequency="1"
+                            TickFrequency="3"
+                            Value="{x:Bind ViewModel.RecordingPaddingMinutes, Mode=TwoWay}" />
+                        <TextBlock
+                            FontSize="12.5"
+                            Foreground="{ThemeResource AppTextTertiaryBrush}"
+                            Text="Эфир всегда немного съезжает, поэтому запись по телепрограмме идёт чуть дольше."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <ToggleSwitch
+                        Header="Буфер отмотки назад"
+                        IsOn="{x:Bind ViewModel.TimeshiftEnabled, Mode=TwoWay}"
+                        OffContent="Выключен"
+                        OnContent="Включён" />
+
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Глубина буфера, минут" />
+                            <TextBlock
+                                HorizontalAlignment="Right"
+                                Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                Text="{x:Bind ViewModel.TimeshiftMinutes, Mode=OneWay}" />
+                        </Grid>
+                        <Slider
+                            Maximum="180"
+                            Minimum="5"
+                            StepFrequency="5"
+                            TickFrequency="35"
+                            Value="{x:Bind ViewModel.TimeshiftMinutes, Mode=TwoWay}" />
+                        <TextBlock
+                            FontSize="12.5"
+                            Foreground="{ThemeResource AppTextTertiaryBrush}"
+                            Text="{x:Bind ViewModel.TimeshiftHint}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- Телепрограмма и данные -->
             <Border Padding="24" Style="{StaticResource CardBorderStyle}">
                 <StackPanel Spacing="18">

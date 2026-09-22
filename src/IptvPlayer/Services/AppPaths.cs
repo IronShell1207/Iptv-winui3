@@ -22,6 +22,11 @@ public static class AppPaths
         }
     }
 
+    /// <summary>Куда складывать записи эфира, если в настройках не указано иное.</summary>
+    public static string DefaultRecordingsFolder => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
+        AppName);
+
     /// <summary>Папка данных версии без пакета — источник для переноса настроек.</summary>
     public static string LegacyRoot => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

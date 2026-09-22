@@ -19,6 +19,7 @@ public sealed partial class ShellView : UserControl
     private readonly PlaylistsViewModel _playlists;
     private readonly ChannelsViewModel _channels;
     private readonly PlayerViewModel _player;
+    private readonly RecordingService _recordings;
 
     public ShellView()
     {
@@ -27,6 +28,10 @@ public sealed partial class ShellView : UserControl
         _playlists = App.GetService<PlaylistsViewModel>();
         _channels = App.GetService<ChannelsViewModel>();
         _player = App.GetService<PlayerViewModel>();
+        _recordings = App.GetService<RecordingService>();
+
+        var recordingsViewModel = App.GetService<RecordingsViewModel>();
+        recordingsViewModel.PlayRequested += OnRecordingPlayRequested;
 
         InitializeComponent();
 
@@ -57,6 +62,11 @@ public sealed partial class ShellView : UserControl
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         PrimaryNav.SelectedIndex = 0;
+
+        _recordings.OutputFolder = string.IsNullOrWhiteSpace(_settings.Current.RecordingsFolder)
+            ? Services.AppPaths.DefaultRecordingsFolder
+            : _settings.Current.RecordingsFolder;
+        await _recordings.LoadAsync();
 
         await _playlists.InitializeAsync();
         _ = ViewModel.CheckConnectionAsync();
@@ -124,6 +134,12 @@ public sealed partial class ShellView : UserControl
     {
         ViewModel.IsPlayerActive = true;
         await _player.PlayAsync(item);
+    }
+
+    private async void OnRecordingPlayRequested(object? sender, RecordingItemViewModel item)
+    {
+        ViewModel.IsPlayerActive = true;
+        await _player.PlayRecordingAsync(item.Recording);
     }
 
     private void OnPlayerCloseRequested(object? sender, EventArgs e)

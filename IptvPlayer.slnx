@@ -13,6 +13,7 @@
     <Project Path="src/IptvPlayer/IptvPlayer.csproj">
       <Platform Solution="*|x64" Project="x64" />
       <Platform Solution="Debug|Any CPU" Project="x64" />
+      <Deploy Solution="Debug|x64" />
     </Project>
   </Folder>
 </Solution>
