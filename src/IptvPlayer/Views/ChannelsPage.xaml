@@ -1,0 +1,320 @@
+<Page
+    x:Class="IptvPlayer.Views.ChannelsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:IptvPlayer.Controls"
+    xmlns:converters="using:IptvPlayer.Converters"
+    xmlns:vm="using:IptvPlayer.ViewModels"
+    Background="Transparent">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+        <converters:PathToImageConverter x:Key="PathToImage" />
+
+        <DataTemplate x:Key="ChannelRowTemplate" x:DataType="vm:ChannelItemViewModel">
+            <Grid
+                Height="76"
+                Padding="14,10"
+                ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="34" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    VerticalAlignment="Center"
+                    FontSize="13"
+                    Foreground="{ThemeResource AppTextTertiaryBrush}"
+                    Text="{x:Bind Number}"
+                    TextAlignment="Right" />
+
+                <Border
+                    Grid.Column="1"
+                    Width="66"
+                    Height="52"
+                    Background="{ThemeResource AppSurfaceHighBrush}"
+                    CornerRadius="8">
+                    <Grid>
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AppTextTertiaryBrush}"
+                            Text="{x:Bind Initials}" />
+                        <Image
+                            Source="{x:Bind LogoPath, Mode=OneWay, Converter={StaticResource PathToImage}}"
+                            Stretch="Uniform" />
+                    </Grid>
+                </Border>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                    <TextBlock
+                        FontSize="15"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AppTextPrimaryBrush}"
+                        Text="{x:Bind Name}"
+                        TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        FontSize="12.5"
+                        Foreground="{ThemeResource AppTextTertiaryBrush}"
+                        Text="{x:Bind Group}"
+                        TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <!-- Что идёт сейчас -->
+                <StackPanel
+                    Grid.Column="3"
+                    VerticalAlignment="Center"
+                    Spacing="6"
+                    Visibility="{x:Bind HasEpg, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock
+                        FontSize="13.5"
+                        Foreground="{ThemeResource AppTextSecondaryBrush}"
+                        Text="{x:Bind NowTitle, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ProgressBar
+                            Height="3"
+                            VerticalAlignment="Center"
+                            CornerRadius="2"
+                            Foreground="{ThemeResource AppAccentBrush}"
+                            Maximum="1"
+                            Value="{x:Bind NowProgress, Mode=OneWay}" />
+                        <TextBlock
+                            Grid.Column="1"
+                            FontSize="11.5"
+                            Foreground="{ThemeResource AppTextTertiaryBrush}"
+                            Text="{x:Bind NowTimeRange, Mode=OneWay}" />
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel
+                    Grid.Column="4"
+                    Orientation="Horizontal"
+                    Spacing="6"
+                    VerticalAlignment="Center">
+                    <Button
+                        Click="OnFavoriteClick"
+                        Style="{StaticResource GlassIconButtonStyle}"
+                        Tag="{x:Bind}"
+                        ToolTipService.ToolTip="В избранное">
+                        <controls:SvgIcon
+                            Width="18"
+                            Height="18"
+                            Foreground="{ThemeResource AppAccentBrush}"
+                            Glyph="Favorites"
+                            IsFilled="{x:Bind IsFavorite, Mode=OneWay}" />
+                    </Button>
+
+                    <Button
+                        Click="OnPlayClick"
+                        Style="{StaticResource GlassIconButtonStyle}"
+                        Tag="{x:Bind}"
+                        ToolTipService.ToolTip="Смотреть">
+                        <controls:SvgIcon
+                            Width="16"
+                            Height="16"
+                            Foreground="{ThemeResource AppTextPrimaryBrush}"
+                            Glyph="Play"
+                            IsFilled="True" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+    </Page.Resources>
+
+    <Grid Margin="28,4,28,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="{x:Bind Title, Mode=OneWay}" />
+                <TextBlock Style="{StaticResource PageSubtitleTextStyle}" Text="{x:Bind Subtitle, Mode=OneWay}" />
+            </StackPanel>
+
+            <StackPanel
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="12">
+                <ProgressRing
+                    Width="20"
+                    Height="20"
+                    IsActive="{x:Bind ViewModel.IsRefreshing, Mode=OneWay}"
+                    Visibility="{x:Bind ViewModel.IsRefreshing, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+
+                <Button
+                    Command="{x:Bind ViewModel.RefreshCommand}"
+                    Style="{StaticResource SoftButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <controls:SvgIcon
+                            Width="17"
+                            Height="17"
+                            Foreground="{ThemeResource AppTextPrimaryBrush}"
+                            Glyph="Refresh" />
+                        <TextBlock VerticalAlignment="Center" Text="Обновить" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Поиск и группы -->
+        <Grid
+            Grid.Row="1"
+            Margin="0,0,0,16"
+            ColumnSpacing="14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="360" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Border
+                Height="44"
+                Background="{ThemeResource AppSurfaceBrush}"
+                BorderBrush="{ThemeResource AppBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource AppPillCornerRadius}">
+                <Grid Margin="16,0" ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <controls:SvgIcon
+                        Width="18"
+                        Height="18"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource AppTextTertiaryBrush}"
+                        Glyph="Search" />
+                    <TextBox
+                        x:Name="SearchBox"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        PlaceholderText="Поиск по названию или номеру…"
+                        Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+            </Border>
+
+            <ComboBox
+                Grid.Column="1"
+                Width="240"
+                HorizontalAlignment="Left"
+                Header=""
+                ItemsSource="{x:Bind ViewModel.Groups}"
+                SelectedItem="{x:Bind ViewModel.SelectedGroup, Mode=TwoWay}" />
+
+            <TextBlock
+                Grid.Column="2"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource AppTextTertiaryBrush}"
+                Text="{x:Bind ViewModel.CountText, Mode=OneWay}" />
+        </Grid>
+
+        <!-- Список -->
+        <Grid Grid.Row="2">
+            <ListView
+                ItemContainerStyle="{StaticResource PlayerChannelItemStyle}"
+                ItemTemplate="{StaticResource ChannelRowTemplate}"
+                ItemsSource="{x:Bind ViewModel.Channels}"
+                IsItemClickEnabled="True"
+                ItemClick="OnChannelClick"
+                SelectionMode="Single"
+                Style="{StaticResource BareListViewStyle}" />
+
+            <!-- Состояние: загрузка -->
+            <StackPanel
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="16"
+                Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <ProgressRing
+                    Width="44"
+                    Height="44"
+                    IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
+                <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Загружаем плейлист…" />
+            </StackPanel>
+
+            <!-- Состояние: ошибка -->
+            <StackPanel
+                MaxWidth="440"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="14"
+                Visibility="{x:Bind ViewModel.HasError, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <controls:SvgIcon
+                    Width="40"
+                    Height="40"
+                    HorizontalAlignment="Center"
+                    Foreground="{ThemeResource AppOfflineBrush}"
+                    Glyph="Warning" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="18"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource AppTextPrimaryBrush}"
+                    Text="Плейлист не загрузился" />
+                <TextBlock
+                    Foreground="{ThemeResource AppTextSecondaryBrush}"
+                    Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+                <Button
+                    HorizontalAlignment="Center"
+                    Command="{x:Bind ViewModel.RefreshCommand}"
+                    Content="Повторить"
+                    Style="{StaticResource AccentButtonStyle2}" />
+            </StackPanel>
+
+            <!-- Состояние: пусто -->
+            <StackPanel
+                MaxWidth="440"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="14"
+                Visibility="{x:Bind ViewModel.IsEmpty, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                <controls:SvgIcon
+                    Width="40"
+                    Height="40"
+                    HorizontalAlignment="Center"
+                    Foreground="{ThemeResource AppTextTertiaryBrush}"
+                    Glyph="Empty" />
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="18"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource AppTextPrimaryBrush}"
+                    Text="Каналов пока нет" />
+                <TextBlock
+                    Foreground="{ThemeResource AppTextSecondaryBrush}"
+                    Text="Откройте плейлист на вкладке «Плейлисты» — каналы появятся здесь."
+                    TextAlignment="Center"
+                    TextWrapping="Wrap" />
+                <Button
+                    HorizontalAlignment="Center"
+                    Click="OnGoToPlaylistsClick"
+                    Content="К плейлистам"
+                    Style="{StaticResource AccentButtonStyle2}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

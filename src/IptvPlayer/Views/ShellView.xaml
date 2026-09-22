@@ -1,0 +1,195 @@
+<UserControl
+    x:Class="IptvPlayer.Views.ShellView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:IptvPlayer.Controls"
+    xmlns:converters="using:IptvPlayer.Converters"
+    xmlns:vm="using:IptvPlayer.ViewModels"
+    xmlns:views="using:IptvPlayer.Views"
+    >
+
+    <UserControl.Resources>
+
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+            <converters:OnlineToBrushConverter x:Key="OnlineToBrush" />
+
+    <!-- Пункт бокового меню: иконка + подпись -->
+    <DataTemplate x:Key="NavItemTemplate" x:DataType="vm:NavigationItem">
+        <Grid Height="44" ColumnSpacing="14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <controls:SvgIcon
+                Width="20"
+                Height="20"
+                VerticalAlignment="Center"
+                Glyph="{x:Bind Glyph}" />
+
+            <TextBlock
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                FontSize="14.5"
+                Text="{x:Bind Title}"
+                TextTrimming="CharacterEllipsis" />
+        </Grid>
+    </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid x:Name="RootGrid" Background="{ThemeResource AppBackgroundBrush}">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Кастомный заголовок окна: перетаскивание за всю полосу -->
+        <Grid x:Name="TitleBarArea" Grid.Row="0" Height="40" Background="Transparent">
+            <TextBlock
+                Margin="16,0,0,0"
+                VerticalAlignment="Center"
+                FontSize="12"
+                Foreground="{ThemeResource AppTextTertiaryBrush}"
+                Text="IPTV Client" />
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Боковое меню -->
+            <Border
+                x:Name="SidebarBorder"
+                Grid.Column="0"
+                Width="248"
+                Margin="12,0,0,12"
+                Padding="12"
+                Background="{ThemeResource AppSurfaceBrush}"
+                BorderBrush="{ThemeResource AppBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource AppCardCornerRadius}">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Логотип -->
+                    <StackPanel
+                        Grid.Row="0"
+                        Margin="6,4,0,20"
+                        Orientation="Horizontal"
+                        Spacing="12">
+                        <Border
+                            Width="40"
+                            Height="40"
+                            Background="{ThemeResource AppAccentBrush}"
+                            CornerRadius="12">
+                            <controls:SvgIcon
+                                Width="20"
+                                Height="20"
+                                Foreground="White"
+                                Glyph="Play"
+                                IsFilled="True" />
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                Text="IPTV Client" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{ThemeResource AppTextTertiaryBrush}"
+                                Text="ТВ для своих" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Основные пункты -->
+                    <ListView
+                        x:Name="PrimaryNav"
+                        Grid.Row="1"
+                        VerticalAlignment="Top"
+                        ItemContainerStyle="{StaticResource NavItemContainerStyle}"
+                        ItemTemplate="{StaticResource NavItemTemplate}"
+                        ItemsSource="{x:Bind ViewModel.PrimaryItems}"
+                        SelectionChanged="OnPrimaryNavSelectionChanged"
+                        SelectionMode="Single" />
+
+                    <Border
+                        Grid.Row="2"
+                        Height="1"
+                        Margin="8,12"
+                        Background="{ThemeResource AppBorderBrush}" />
+
+                    <StackPanel Grid.Row="3">
+                        <ListView
+                            x:Name="SecondaryNav"
+                            ItemContainerStyle="{StaticResource NavItemContainerStyle}"
+                            ItemTemplate="{StaticResource NavItemTemplate}"
+                            ItemsSource="{x:Bind ViewModel.SecondaryItems}"
+                            SelectionChanged="OnSecondaryNavSelectionChanged"
+                            SelectionMode="Single" />
+
+                        <!-- Статус подключения -->
+                        <Border
+                            Margin="0,16,0,0"
+                            Padding="14,12"
+                            Background="{ThemeResource AppSurfaceHighBrush}"
+                            CornerRadius="{StaticResource AppControlCornerRadius}">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Ellipse
+                                    Width="10"
+                                    Height="10"
+                                    VerticalAlignment="Center"
+                                    Fill="{x:Bind ViewModel.IsSourceOnline, Mode=OneWay, Converter={StaticResource OnlineToBrush}}" />
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock
+                                        FontSize="13"
+                                        FontWeight="SemiBold"
+                                        Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                        Text="{x:Bind ViewModel.ConnectionTitle, Mode=OneWay}" />
+                                    <TextBlock
+                                        FontSize="11"
+                                        Foreground="{ThemeResource AppTextTertiaryBrush}"
+                                        Text="{x:Bind ViewModel.ConnectionSubtitle, Mode=OneWay}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+
+                                <controls:SvgIcon
+                                    Grid.Column="2"
+                                    Width="16"
+                                    Height="16"
+                                    Foreground="{ThemeResource AppTextTertiaryBrush}"
+                                    Glyph="ChevronRight" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Контент -->
+            <Frame x:Name="ContentFrame" Grid.Column="1" />
+
+            <!-- Плеер поверх всего -->
+            <views:PlayerView
+                x:Name="Player"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                Visibility="{x:Bind ViewModel.IsPlayerActive, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+        </Grid>
+    </Grid>
+</UserControl>

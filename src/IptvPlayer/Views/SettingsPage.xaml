@@ -1,0 +1,166 @@
+<Page
+    x:Class="IptvPlayer.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:IptvPlayer.Controls"
+    xmlns:converters="using:IptvPlayer.Converters"
+    Background="Transparent">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+    </Page.Resources>
+
+    <ScrollViewer Padding="28,4,28,20" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="820" HorizontalAlignment="Left" Spacing="20">
+
+            <StackPanel>
+                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="Настройки" />
+                <TextBlock Style="{StaticResource PageSubtitleTextStyle}" Text="Источник потока, воспроизведение и диагностика" />
+            </StackPanel>
+
+            <!-- Источник -->
+            <Border Padding="24" Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="18">
+                    <TextBlock
+                        FontSize="17"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AppTextPrimaryBrush}"
+                        Text="Источник потока" />
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Режим" />
+                        <ComboBox
+                            Width="320"
+                            SelectedIndex="{x:Bind ViewModel.SourceModeIndex, Mode=TwoWay}">
+                            <ComboBoxItem Content="Через udpxy (рекомендуется)" />
+                            <ComboBoxItem Content="Прямой мультикаст" />
+                        </ComboBox>
+                        <TextBlock
+                            FontSize="12.5"
+                            Foreground="{ThemeResource AppTextTertiaryBrush}"
+                            Text="{x:Bind ViewModel.MulticastHint}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Адрес udpxy" />
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{x:Bind ViewModel.UdpxyBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            <Button
+                                Grid.Column="1"
+                                Command="{x:Bind ViewModel.CheckUdpxyCommand}"
+                                Content="Проверить"
+                                Style="{StaticResource SoftButtonStyle}" />
+                        </Grid>
+                        <TextBlock
+                            FontSize="12.5"
+                            Foreground="{ThemeResource AppTextSecondaryBrush}"
+                            Text="{x:Bind ViewModel.CheckResult, Mode=OneWay}"
+                            TextWrapping="Wrap"
+                            Visibility="{x:Bind ViewModel.CheckResult, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Воспроизведение -->
+            <Border Padding="24" Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="18">
+                    <TextBlock
+                        FontSize="17"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AppTextPrimaryBrush}"
+                        Text="Воспроизведение" />
+
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Буфер, мс" />
+                            <TextBlock
+                                HorizontalAlignment="Right"
+                                Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                Text="{x:Bind ViewModel.BufferMilliseconds, Mode=OneWay}" />
+                        </Grid>
+                        <Slider
+                            Maximum="5000"
+                            Minimum="200"
+                            StepFrequency="100"
+                            TickFrequency="800"
+                            Value="{x:Bind ViewModel.BufferMilliseconds, Mode=TwoWay}" />
+                        <TextBlock
+                            FontSize="12.5"
+                            Foreground="{ThemeResource AppTextTertiaryBrush}"
+                            Text="Меньше буфер — быстрее переключение, но выше риск рассыпания картинки."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <ToggleSwitch
+                        Header="Аппаратное декодирование"
+                        IsOn="{x:Bind ViewModel.HardwareDecoding, Mode=TwoWay}"
+                        OffContent="Выключено"
+                        OnContent="Включено" />
+
+                    <ToggleSwitch
+                        Header="Сводить многоканальный звук в стерео"
+                        IsOn="{x:Bind ViewModel.DownmixToStereo, Mode=TwoWay}"
+                        OffContent="Выключено"
+                        OnContent="Включено" />
+
+                    <ToggleSwitch
+                        Header="Включать последний канал при запуске"
+                        IsOn="{x:Bind ViewModel.ResumeLastChannel, Mode=TwoWay}"
+                        OffContent="Выключено"
+                        OnContent="Включено" />
+                </StackPanel>
+            </Border>
+
+            <!-- Телепрограмма и данные -->
+            <Border Padding="24" Style="{StaticResource CardBorderStyle}">
+                <StackPanel Spacing="18">
+                    <TextBlock
+                        FontSize="17"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AppTextPrimaryBrush}"
+                        Text="Данные" />
+
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Обновлять телепрограмму раз в, часов" />
+                            <TextBlock
+                                HorizontalAlignment="Right"
+                                Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                Text="{x:Bind ViewModel.EpgCacheHours, Mode=OneWay}" />
+                        </Grid>
+                        <Slider
+                            Maximum="48"
+                            Minimum="1"
+                            StepFrequency="1"
+                            TickFrequency="8"
+                            Value="{x:Bind ViewModel.EpgCacheHours, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Уровень журнала" />
+                        <ComboBox
+                            Width="240"
+                            ItemsSource="{x:Bind ViewModel.LogLevels}"
+                            SelectedItem="{x:Bind ViewModel.LogLevel, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button
+                            Command="{x:Bind ViewModel.ClearLogoCacheCommand}"
+                            Content="Очистить кэш логотипов"
+                            Style="{StaticResource SoftButtonStyle}" />
+                        <Button
+                            Click="OnOpenLogsClick"
+                            Content="Открыть логи"
+                            Style="{StaticResource SoftButtonStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

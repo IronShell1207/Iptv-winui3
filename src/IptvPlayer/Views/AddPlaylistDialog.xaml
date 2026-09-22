@@ -1,0 +1,49 @@
+<ContentDialog
+    x:Class="IptvPlayer.Views.AddPlaylistDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Добавить плейлист"
+    CloseButtonText="Отмена"
+    DefaultButton="Primary"
+    PrimaryButtonText="Добавить">
+
+    <StackPanel Width="440" Spacing="14">
+
+        <TextBox
+            x:Name="NameBox"
+            Header="Название"
+            PlaceholderText="Домашний IPTV" />
+
+        <ComboBox
+            x:Name="KindBox"
+            HorizontalAlignment="Stretch"
+            Header="Тип источника"
+            SelectionChanged="OnKindChanged">
+            <ComboBoxItem Content="M3U по ссылке" />
+            <ComboBoxItem Content="Xtream Codes" />
+            <ComboBoxItem Content="Локальный файл" />
+        </ComboBox>
+
+        <TextBox
+            x:Name="SourceBox"
+            Header="Адрес плейлиста"
+            PlaceholderText="http://192.168.3.1/iptv.m3u" />
+
+        <StackPanel x:Name="CredentialsPanel" Spacing="14" Visibility="Collapsed">
+            <TextBox x:Name="UserBox" Header="Логин" />
+            <PasswordBox x:Name="PasswordBox" Header="Пароль" />
+        </StackPanel>
+
+        <TextBox
+            x:Name="EpgBox"
+            Header="URL телепрограммы (необязательно)"
+            PlaceholderText="Возьмём из плейлиста, если оставить пустым" />
+
+        <TextBlock
+            x:Name="ErrorText"
+            Foreground="{ThemeResource AppOfflineBrush}"
+            TextWrapping="Wrap"
+            Visibility="Collapsed" />
+
+    </StackPanel>
+</ContentDialog>

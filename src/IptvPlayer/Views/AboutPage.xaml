@@ -1,0 +1,133 @@
+<Page
+    x:Class="IptvPlayer.Views.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:IptvPlayer.Controls"
+    Background="Transparent">
+
+    <ScrollViewer Padding="28,4,28,20" VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="760" HorizontalAlignment="Left" Spacing="20">
+
+            <StackPanel>
+                <TextBlock Style="{StaticResource PageTitleTextStyle}" Text="О программе" />
+                <TextBlock Style="{StaticResource PageSubtitleTextStyle}" Text="Домашний IPTV-плеер для Windows" />
+            </StackPanel>
+
+            <Border Style="{StaticResource CardBorderStyle}" Padding="24">
+                <Grid ColumnSpacing="20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border
+                        Width="64"
+                        Height="64"
+                        VerticalAlignment="Top"
+                        Background="{ThemeResource AppAccentBrush}"
+                        CornerRadius="18">
+                        <controls:SvgIcon
+                            Width="30"
+                            Height="30"
+                            Foreground="White"
+                            Glyph="Play"
+                            IsFilled="True" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Spacing="8">
+                        <TextBlock
+                            FontSize="22"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource AppTextPrimaryBrush}"
+                            Text="IPTV Client" />
+                        <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="{x:Bind Version}" />
+                        <TextBlock
+                            Foreground="{ThemeResource AppTextSecondaryBrush}"
+                            TextWrapping="Wrap"
+                            Text="Воспроизведение через FFmpegInteropX: живой MPEG-TS, MPEG-2 для SD-каналов и аппаратное декодирование. Каналы берутся из M3U-плейлиста, программа — из XMLTV." />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}" Padding="24">
+                <StackPanel Spacing="16">
+                    <TextBlock
+                        FontSize="17"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AppTextPrimaryBrush}"
+                        Text="Горячие клавиши" />
+
+                    <Grid ColumnSpacing="40" RowSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Foreground="{ThemeResource AppTextPrimaryBrush}" Text="Пробел" />
+                        <TextBlock Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Пауза и продолжение" />
+
+                        <TextBlock Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="F, F11" />
+                        <TextBlock Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Полный экран" />
+
+                        <TextBlock Grid.Row="1" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="↑ ↓" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Переключение каналов" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="← →" />
+                        <TextBlock Grid.Row="1" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Панель каналов" />
+
+                        <TextBlock Grid.Row="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="0–9" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Ввод номера канала" />
+
+                        <TextBlock Grid.Row="2" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="M" />
+                        <TextBlock Grid.Row="2" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Выключить звук" />
+
+                        <TextBlock Grid.Row="3" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="Esc" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Выход из полного экрана" />
+
+                        <TextBlock Grid.Row="3" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="Ctrl+F" />
+                        <TextBlock Grid.Row="3" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Поиск по каналам" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource CardBorderStyle}" Padding="24">
+                <StackPanel Spacing="14">
+                    <TextBlock
+                        FontSize="17"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource AppTextPrimaryBrush}"
+                        Text="Файлы приложения" />
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Данные и кэш" />
+                        <TextBlock
+                            FontFamily="Consolas"
+                            FontSize="12.5"
+                            Foreground="{ThemeResource AppTextTertiaryBrush}"
+                            IsTextSelectionEnabled="True"
+                            Text="{x:Bind DataFolder}" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Button
+                            Click="OnOpenDataFolderClick"
+                            Content="Открыть папку данных"
+                            Style="{StaticResource SoftButtonStyle}" />
+                        <Button
+                            Click="OnOpenLogsClick"
+                            Content="Открыть логи"
+                            Style="{StaticResource SoftButtonStyle}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

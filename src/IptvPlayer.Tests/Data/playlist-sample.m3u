@@ -1,0 +1,10 @@
+#EXTM3U url-tvg="http://streamer.mkpnet.ru/epg_service.xml" cache=300
+#EXTINF:-1 tvg-id=000000538 group-title="information" ,Первый канал HD
+http://192.168.3.1:4022/udp/239.195.65.33:1234
+#EXTINF:-1 tvg-id=000000537 group-title="information" ,Россия HD
+http://192.168.3.1:4022/udp/239.195.65.34:1234
+
+#EXTINF:-1 tvg-id=000000101 tvg-logo="http://logo.local/match.png" group-title="sports",Матч! Игра, повтор
+udp://@239.195.65.40:1234
+#EXTINF:-1 group-title=childrens,Карусель
+rtp://@239.195.65.41:1234

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tv generator-info-name="test">
+  <channel id="000000538">
+    <display-name>Первый канал HD</display-name>
+    <icon src="http://logo.local/1.png" />
+  </channel>
+  <channel id="000000537">
+    <display-name>Россия HD</display-name>
+  </channel>
+  <programme start="20260922183000 +0300" stop="20260922193000 +0300" channel="000000538">
+    <title>Новости</title>
+    <desc>Информационная программа</desc>
+    <category>Новости</category>
+  </programme>
+  <programme start="20260922193000 +0300" stop="20260922210000 +0300" channel="000000538">
+    <title>Вечерний эфир</title>
+  </programme>
+  <programme start="202609221900 +0300" stop="202609222000 +0300" channel="000000537">
+    <title>Вести</title>
+  </programme>
+</tv>

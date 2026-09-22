@@ -1,0 +1,35 @@
+namespace IptvPlayer.Core.Models;
+
+public enum StreamSourceMode
+{
+    /// <summary>Через HTTP-прокси udpxy (по умолчанию).</summary>
+    Udpxy,
+    /// <summary>Прямой мультикаст udp://@… (только проводная сеть).</summary>
+    DirectMulticast,
+}
+
+/// <summary>Настройки приложения (settings.json).</summary>
+public sealed record AppSettings
+{
+    public const string DefaultPlaylistUrl = "http://192.168.3.1/iptv.m3u";
+    public const string DefaultEpgUrl = "http://streamer.mkpnet.ru/epg_service.xml";
+    public const string DefaultUdpxyBaseUrl = "http://192.168.3.1:4022";
+
+    public string UdpxyBaseUrl { get; init; } = DefaultUdpxyBaseUrl;
+    public StreamSourceMode SourceMode { get; init; } = StreamSourceMode.Udpxy;
+
+    /// <summary>Громкость 0..100.</summary>
+    public int Volume { get; init; } = 80;
+    public bool IsMuted { get; init; }
+    public bool ResumeLastChannel { get; init; } = true;
+
+    /// <summary>Буфер упреждающего чтения, мс.</summary>
+    public int BufferMilliseconds { get; init; } = 1500;
+    public bool HardwareDecoding { get; init; } = true;
+    public bool DownmixToStereo { get; init; } = true;
+
+    /// <summary>Время жизни кэша EPG, часов.</summary>
+    public int EpgCacheHours { get; init; } = 6;
+    public string LogLevel { get; init; } = "Information";
+    public string Language { get; init; } = "ru";
+}
