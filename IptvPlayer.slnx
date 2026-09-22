@@ -1,7 +1,18 @@
 <Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
   <Folder Name="/src/">
-    <Project Path="src/IptvPlayer.Core/IptvPlayer.Core.csproj" />
-    <Project Path="src/IptvPlayer.Tests/IptvPlayer.Tests.csproj" />
-    <Project Path="src/IptvPlayer/IptvPlayer.csproj" />
+    <Project Path="src/IptvPlayer.Core/IptvPlayer.Core.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/IptvPlayer.Tests/IptvPlayer.Tests.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/IptvPlayer/IptvPlayer.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+      <Platform Solution="Debug|Any CPU" Project="x64" />
+    </Project>
   </Folder>
 </Solution>
