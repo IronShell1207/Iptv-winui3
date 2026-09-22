@@ -17,6 +17,8 @@ public sealed class EpgService
     private readonly HttpClient _http;
     private readonly ILogger<EpgService> _log;
 
+    private readonly SemaphoreSlim _loadGate = new(1, 1);
+
     private Dictionary<string, EpgProgramme[]> _byChannel = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, EpgChannel> _channels = new(StringComparer.OrdinalIgnoreCase);
 
@@ -41,8 +43,27 @@ public sealed class EpgService
     /// Грузит EPG: свежий кэш используется как есть, иначе скачивает.
     /// Возвращает false, если данных получить не удалось (не ошибка для UI).
     /// </summary>
+    /// <remarks>
+    /// Загрузки сериализованы: плейлист показывается из кэша и следом обновляется
+    /// из сети, поэтому вызовы приходят парами. Второй дожидается первого и почти
+    /// всегда обходится уже скачанным файлом.
+    /// </remarks>
     public async Task<bool> LoadAsync(
         string playlistId, string? epgUrl, TimeSpan cacheLifetime, CancellationToken ct = default)
+    {
+        await _loadGate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            return await LoadCoreAsync(playlistId, epgUrl, cacheLifetime, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            _loadGate.Release();
+        }
+    }
+
+    private async Task<bool> LoadCoreAsync(
+        string playlistId, string? epgUrl, TimeSpan cacheLifetime, CancellationToken ct)
     {
         var cache = CachePath(playlistId);
 
@@ -64,14 +85,25 @@ public sealed class EpgService
                 .ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var temp = cache + ".tmp";
-            await using (var network = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
-            await using (var file = File.Create(temp))
+            var temp = $"{cache}.{Guid.NewGuid():N}.tmp";
+            try
             {
-                await network.CopyToAsync(file, ct).ConfigureAwait(false);
+                await using (var network = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
+                await using (var file = File.Create(temp))
+                {
+                    await network.CopyToAsync(file, ct).ConfigureAwait(false);
+                }
+
+                File.Move(temp, cache, overwrite: true);
+            }
+            finally
+            {
+                if (File.Exists(temp))
+                {
+                    try { File.Delete(temp); } catch (IOException) { /* остатки не критичны */ }
+                }
             }
 
-            File.Move(temp, cache, overwrite: true);
             return await TryLoadFileAsync(cache, ct).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException)
