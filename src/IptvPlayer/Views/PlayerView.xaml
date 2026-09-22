@@ -252,6 +252,52 @@
                 Text="{x:Bind ViewModel.Toast, Mode=OneWay}" />
         </Border>
 
+        <!-- Шкала громкости: появляется при изменении с клавиатуры и кнопок -->
+        <Border
+            Margin="0,0,104,0"
+            Padding="14,18"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Background="#B3000000"
+            CornerRadius="{StaticResource AppCardCornerRadius}"
+            IsHitTestVisible="False"
+            Opacity="{x:Bind VolumeOsdOpacity, Mode=OneWay}">
+            <Border.OpacityTransition>
+                <ScalarTransition Duration="0:0:0.18" />
+            </Border.OpacityTransition>
+
+            <StackPanel Spacing="12">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontSize="13"
+                    FontWeight="SemiBold"
+                    Foreground="White"
+                    Text="{x:Bind VolumeCaption, Mode=OneWay}" />
+
+                <!-- Шкала растёт снизу вверх -->
+                <Grid
+                    Width="8"
+                    Height="176"
+                    HorizontalAlignment="Center">
+                    <Border
+                        Background="#33FFFFFF"
+                        CornerRadius="4" />
+                    <Border
+                        VerticalAlignment="Bottom"
+                        Background="{ThemeResource AppAccentBrush}"
+                        CornerRadius="4"
+                        Height="{x:Bind VolumeBarHeight, Mode=OneWay}" />
+                </Grid>
+
+                <controls:SvgIcon
+                    Width="20"
+                    Height="20"
+                    HorizontalAlignment="Center"
+                    Foreground="White"
+                    Glyph="{x:Bind VolumeGlyph, Mode=OneWay}" />
+            </StackPanel>
+        </Border>
+
         <!-- Ввод номера канала -->
         <Border
             Padding="28,16"

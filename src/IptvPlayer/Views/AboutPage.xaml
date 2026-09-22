@@ -69,31 +69,45 @@
                             <RowDefinition />
                             <RowDefinition />
                             <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Foreground="{ThemeResource AppTextPrimaryBrush}" Text="Пробел" />
+                        <TextBlock Foreground="{ThemeResource AppTextPrimaryBrush}" Text="Пробел, K" />
                         <TextBlock Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Пауза и продолжение" />
-
                         <TextBlock Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="F, F11" />
                         <TextBlock Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Полный экран" />
 
-                        <TextBlock Grid.Row="1" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="↑ ↓" />
+                        <TextBlock Grid.Row="1" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="↑ ↓, PgUp, PgDn" />
                         <TextBlock Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Переключение каналов" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="Backspace" />
+                        <TextBlock Grid.Row="1" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Вернуться к прошлому каналу" />
 
-                        <TextBlock Grid.Row="1" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="← →" />
-                        <TextBlock Grid.Row="1" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Панель каналов" />
-
-                        <TextBlock Grid.Row="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="0–9" />
-                        <TextBlock Grid.Row="2" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Ввод номера канала" />
-
+                        <TextBlock Grid.Row="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="+ −, Ctrl+↑ ↓" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Громкость (и колесо мыши)" />
                         <TextBlock Grid.Row="2" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="M" />
                         <TextBlock Grid.Row="2" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Выключить звук" />
 
-                        <TextBlock Grid.Row="3" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="Esc" />
-                        <TextBlock Grid.Row="3" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Выход из полного экрана" />
+                        <TextBlock Grid.Row="3" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="C" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Список каналов" />
+                        <TextBlock Grid.Row="3" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="← →" />
+                        <TextBlock Grid.Row="3" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Показать и спрятать список" />
 
-                        <TextBlock Grid.Row="3" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="Ctrl+F" />
-                        <TextBlock Grid.Row="3" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Поиск по каналам" />
+                        <TextBlock Grid.Row="4" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="A" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Вписывание кадра" />
+                        <TextBlock Grid.Row="4" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="P" />
+                        <TextBlock Grid.Row="4" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Окно поверх остальных" />
+
+                        <TextBlock Grid.Row="5" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="D" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="В избранное" />
+                        <TextBlock Grid.Row="5" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="R" />
+                        <TextBlock Grid.Row="5" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Переподключиться" />
+
+                        <TextBlock Grid.Row="6" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="0–9" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Ввод номера канала" />
+                        <TextBlock Grid.Row="6" Grid.Column="2" Foreground="{ThemeResource AppTextPrimaryBrush}" Text="Esc" />
+                        <TextBlock Grid.Row="6" Grid.Column="3" Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Выход из полного экрана" />
                     </Grid>
                 </StackPanel>
             </Border>

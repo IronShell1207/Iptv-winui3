@@ -33,6 +33,8 @@ public sealed partial class PlayerViewModel : ObservableObject
     private DispatcherQueueTimer? _tickTimer;
     private DispatcherQueueTimer? _numberTimer;
     private DispatcherQueueTimer? _toastTimer;
+    private DispatcherQueueTimer? _volumeOsdTimer;
+    private ChannelItemViewModel? _previousChannel;
     private string _numberBuffer = string.Empty;
     private bool _pointerOverChrome;
 
@@ -109,6 +111,13 @@ public sealed partial class PlayerViewModel : ObservableObject
     [ObservableProperty]
     public partial string? Toast { get; set; }
 
+    /// <summary>Шкала громкости у правого края — при изменении с клавиатуры и кнопок.</summary>
+    [ObservableProperty]
+    public partial bool IsVolumeOsdVisible { get; set; }
+
+    /// <summary>Громкость в процентах для подписи на шкале.</summary>
+    public int VolumePercent => IsMuted ? 0 : (int)Math.Round(Volume);
+
     [ObservableProperty]
     public partial string ClockTime { get; set; } = DateTime.Now.ToString("HH:mm");
 
@@ -170,9 +179,17 @@ public sealed partial class PlayerViewModel : ObservableObject
 
     partial void OnNextTitleChanged(string? value) => OnPropertyChanged(nameof(HasNext));
 
-    partial void OnVolumeChanged(double value) => _playback.Volume = value;
+    partial void OnVolumeChanged(double value)
+    {
+        _playback.Volume = value;
+        OnPropertyChanged(nameof(VolumePercent));
+    }
 
-    partial void OnIsMutedChanged(bool value) => _playback.IsMuted = value;
+    partial void OnIsMutedChanged(bool value)
+    {
+        _playback.IsMuted = value;
+        OnPropertyChanged(nameof(VolumePercent));
+    }
 
     partial void OnVideoFitChanged(VideoFitMode value)
     {
@@ -187,6 +204,9 @@ public sealed partial class PlayerViewModel : ObservableObject
     /// <summary>Открыть канал в плеере.</summary>
     public async Task PlayAsync(ChannelItemViewModel item)
     {
+        if (Current is { } previous && !ReferenceEquals(previous, item))
+            _previousChannel = previous;
+
         Current = item;
         ErrorMessage = null;
         StatusMessage = "Подключение…";
@@ -228,6 +248,42 @@ public sealed partial class PlayerViewModel : ObservableObject
     {
         IsMuted = !IsMuted;
         ShowControls();
+        ShowVolumeOsd();
+    }
+
+    /// <summary>Громкость меняется шагами по 5 — так удобнее держать клавишу.</summary>
+    [RelayCommand]
+    private void VolumeUp() => ChangeVolume(+5);
+
+    [RelayCommand]
+    private void VolumeDown() => ChangeVolume(-5);
+
+    private void ChangeVolume(double delta)
+    {
+        if (IsMuted && delta > 0) IsMuted = false;
+
+        Volume = Math.Clamp(Volume + delta, 0, 100);
+        ShowControls();
+        ShowVolumeOsd();
+    }
+
+    /// <summary>Показывает шкалу громкости и прячет её через пару секунд.</summary>
+    public void ShowVolumeOsd()
+    {
+        IsVolumeOsdVisible = true;
+
+        _volumeOsdTimer ??= CreateTimer(
+            TimeSpan.FromSeconds(1.6), () => IsVolumeOsdVisible = false, repeat: false);
+        _volumeOsdTimer.Stop();
+        _volumeOsdTimer.Start();
+    }
+
+    /// <summary>Возврат к каналу, с которого только что ушли.</summary>
+    [RelayCommand]
+    private async Task LastChannel()
+    {
+        if (_previousChannel is { } previous) await PlayAsync(previous);
+        else ShowToast("Предыдущего канала ещё нет");
     }
 
     [RelayCommand]

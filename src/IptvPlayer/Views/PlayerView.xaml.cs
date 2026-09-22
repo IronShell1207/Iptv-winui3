@@ -21,6 +21,7 @@ public sealed partial class PlayerView : UserControl
         AddHandler(PointerMovedEvent, new PointerEventHandler(OnPointerMoved), handledEventsToo: true);
         DoubleTapped += OnDoubleTapped;
 
+        PointerWheelChanged += OnPointerWheelChanged;
         SizeChanged += (_, _) => UpdateLayoutInsets();
         ChannelPanel.SizeChanged += (_, _) => UpdateLayoutInsets();
     }
@@ -76,6 +77,13 @@ public sealed partial class PlayerView : UserControl
 
     public double ToastOpacity => ViewModel.Toast is null ? 0 : 1;
 
+    public double VolumeOsdOpacity => ViewModel.IsVolumeOsdVisible ? 1 : 0;
+
+    /// <summary>Высота заполненной части шкалы: 176 — высота дорожки в разметке.</summary>
+    public double VolumeBarHeight => 176 * Math.Clamp(ViewModel.VolumePercent, 0, 100) / 100.0;
+
+    public string VolumeCaption => ViewModel.IsMuted ? "Без звука" : $"{ViewModel.VolumePercent}%";
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
@@ -102,6 +110,14 @@ public sealed partial class PlayerView : UserControl
             case nameof(PlayerViewModel.IsMuted):
             case nameof(PlayerViewModel.Volume):
                 OnPropertyChangedLocal(nameof(VolumeGlyph));
+                break;
+
+            case nameof(PlayerViewModel.IsVolumeOsdVisible):
+                OnPropertyChangedLocal(nameof(VolumeOsdOpacity));
+                break;
+
+            case nameof(PlayerViewModel.VolumePercent):
+                OnPropertyChangedLocal(nameof(VolumeBarHeight));
                 break;
             case nameof(PlayerViewModel.IsFullScreen):
                 OnPropertyChangedLocal(nameof(FullScreenGlyph));
@@ -188,6 +204,20 @@ public sealed partial class PlayerView : UserControl
 
     private void OnChromePointerExited(object sender, PointerRoutedEventArgs e)
         => ViewModel.SetPointerOverChrome(false);
+
+    private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+    {
+        // колесо над кадром крутит громкость; над списком каналов оно прокручивает список
+        if (IsChrome(e.OriginalSource as DependencyObject)) return;
+
+        var delta = e.GetCurrentPoint(this).Properties.MouseWheelDelta;
+        if (delta == 0) return;
+
+        if (delta > 0) ViewModel.VolumeUpCommand.Execute(null);
+        else ViewModel.VolumeDownCommand.Execute(null);
+
+        e.Handled = true;
+    }
 
     private void OnDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
     {

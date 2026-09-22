@@ -142,12 +142,22 @@ public sealed partial class ShellView : UserControl
 
         if (!ViewModel.IsPlayerActive) return;
 
+        if (ctrl && e.Key is VirtualKey.Up or VirtualKey.Down)
+        {
+            if (e.Key == VirtualKey.Up) _player.VolumeUpCommand.Execute(null);
+            else _player.VolumeDownCommand.Execute(null);
+
+            e.Handled = true;
+            return;
+        }
+
         // при вводе в поле поиска клавиши плееру не достаются
         if (FocusManager.GetFocusedElement(XamlRoot) is TextBox) return;
 
         switch (e.Key)
         {
             case VirtualKey.Space:
+            case VirtualKey.K:
                 _player.TogglePlayPauseCommand.Execute(null);
                 break;
 
@@ -162,10 +172,12 @@ public sealed partial class ShellView : UserControl
 
             // в оконном режиме стрелки принадлежат списку каналов
             case VirtualKey.Up when _player.IsFullScreen:
+            case VirtualKey.PageUp:
                 _player.PreviousChannelCommand.Execute(null);
                 break;
 
             case VirtualKey.Down when _player.IsFullScreen:
+            case VirtualKey.PageDown:
                 _player.NextChannelCommand.Execute(null);
                 break;
 
@@ -180,6 +192,41 @@ public sealed partial class ShellView : UserControl
 
             case VirtualKey.M:
                 _player.ToggleMuteCommand.Execute(null);
+                break;
+
+            // громкость: плюс и минус в обоих рядах клавиатуры
+            case VirtualKey.Add:
+            case (VirtualKey)187:       // OemPlus
+                _player.VolumeUpCommand.Execute(null);
+                break;
+
+            case VirtualKey.Subtract:
+            case (VirtualKey)189:       // OemMinus
+                _player.VolumeDownCommand.Execute(null);
+                break;
+
+            case VirtualKey.C:
+                _player.ToggleChannelPanelCommand.Execute(null);
+                break;
+
+            case VirtualKey.A:
+                _player.CycleVideoFitCommand.Execute(null);
+                break;
+
+            case VirtualKey.P:
+                _player.ToggleCompactOverlayCommand.Execute(null);
+                break;
+
+            case VirtualKey.R:
+                _player.RetryCommand.Execute(null);
+                break;
+
+            case VirtualKey.D:
+                _player.ToggleFavoriteCommand.Execute(null);
+                break;
+
+            case VirtualKey.Back:
+                _player.LastChannelCommand.Execute(null);
                 break;
 
             case >= VirtualKey.Number0 and <= VirtualKey.Number9:
