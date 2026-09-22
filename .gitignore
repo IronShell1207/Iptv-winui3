@@ -5,3 +5,9 @@ obj/
 .vs/
 TestResults/
 *.binlog
+artifacts/
+AppPackages/
+BundleArtifacts/
+*.pfx
+*.msix
+*.msixbundle

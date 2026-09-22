@@ -8,7 +8,7 @@ namespace IptvPlayer.Controls;
 /// Раскладывает элементы в строку и переносит на следующую, когда кончается ширина.
 /// В WinUI своего WrapPanel нет, а карточкам плейлистов он нужен.
 /// </summary>
-public sealed class WrapPanel : Panel
+public sealed partial class WrapPanel : Panel
 {
     public static readonly DependencyProperty HorizontalSpacingProperty = DependencyProperty.Register(
         nameof(HorizontalSpacing), typeof(double), typeof(WrapPanel),

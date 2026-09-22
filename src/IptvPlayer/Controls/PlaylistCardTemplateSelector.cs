@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 namespace IptvPlayer.Controls;
 
 /// <summary>Карточка плейлиста или карточка «добавить» — обе в одной сетке.</summary>
-public sealed class PlaylistCardTemplateSelector : DataTemplateSelector
+public sealed partial class PlaylistCardTemplateSelector : DataTemplateSelector
 {
     public DataTemplate? PlaylistTemplate { get; set; }
 

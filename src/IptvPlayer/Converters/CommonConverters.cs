@@ -8,7 +8,7 @@ using Windows.UI;
 namespace IptvPlayer.Converters;
 
 /// <summary>true → Visible. Параметр «invert» переворачивает результат.</summary>
-public sealed class BoolToVisibilityConverter : IValueConverter
+public sealed partial class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -32,7 +32,7 @@ public sealed class BoolToVisibilityConverter : IValueConverter
 }
 
 /// <summary>Инвертирует bool — для IsEnabled и обратных состояний.</summary>
-public sealed class BoolNegationConverter : IValueConverter
+public sealed partial class BoolNegationConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
         => value is not true;
@@ -42,7 +42,7 @@ public sealed class BoolNegationConverter : IValueConverter
 }
 
 /// <summary>Путь к файлу логотипа → BitmapImage; пустой путь даёт null.</summary>
-public sealed class PathToImageConverter : IValueConverter
+public sealed partial class PathToImageConverter : IValueConverter
 {
     public object? Convert(object value, Type targetType, object parameter, string language)
     {
@@ -63,7 +63,7 @@ public sealed class PathToImageConverter : IValueConverter
 }
 
 /// <summary>Шестнадцатеричный цвет «#RRGGBB» → кисть. Для обложек плейлистов.</summary>
-public sealed class HexToBrushConverter : IValueConverter
+public sealed partial class HexToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -87,7 +87,7 @@ public sealed class HexToBrushConverter : IValueConverter
 }
 
 /// <summary>Статус источника: true → зелёный, false → красный, null → серый.</summary>
-public sealed class OnlineToBrushConverter : IValueConverter
+public sealed partial class OnlineToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -108,7 +108,7 @@ public sealed class OnlineToBrushConverter : IValueConverter
 }
 
 /// <summary>Доля 0..1 → ширина в пикселях относительно переданной ширины дорожки.</summary>
-public sealed class ProgressToWidthConverter : IValueConverter
+public sealed partial class ProgressToWidthConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {

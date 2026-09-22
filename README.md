@@ -20,14 +20,35 @@ dotnet build IptvPlayer.slnx -p:Platform=x64
 dotnet test src/IptvPlayer.Tests/IptvPlayer.Tests.csproj
 ```
 
-Запуск собранного приложения:
+Приложение упаковывается в **MSIX** (single-project packaging): манифест лежит
+в `src/IptvPlayer/Package.appxmanifest`, иконки — в `src/IptvPlayer/Assets`.
+
+### Запуск на своей машине
+
+Нужен включённый режим разработчика (Параметры → Система → Для разработчиков).
+После сборки пакет регистрируется прямо из папки вывода, без подписи:
 
 ```bash
-src/IptvPlayer/bin/x64/Debug/net8.0-windows10.0.26100.0/win-x64/IptvPlayer.exe
+powershell -c "Add-AppxPackage -Register 'src/IptvPlayer/bin/x64/Debug/net8.0-windows10.0.26100.0/win-x64/AppxManifest.xml'"
 ```
 
-Приложение собирается как **unpackaged** (`WindowsPackageType=None`) и self-contained,
-поэтому запускается из папки сборки без установки.
+Дальше «IPTV Client» запускается из меню «Пуск». Удалить:
+
+```bash
+powershell -c "Get-AppxPackage IptvPlayer.Home | Remove-AppxPackage"
+```
+
+### Сборка устанавливаемого пакета
+
+```bash
+dotnet build src/IptvPlayer/IptvPlayer.csproj -p:Platform=x64 -p:GenerateAppxPackageOnBuild=true -p:AppxPackageDir=artifacts/msix/
+```
+
+Получится `artifacts/msix/…/IptvPlayer_1.0.0.0_x64_Debug.msix` (около 100 МБ:
+Windows App SDK и FFmpeg лежат внутри, поэтому на целевой машине ничего
+доустанавливать не нужно). Для установки на другом компьютере пакет надо
+подписать сертификатом и добавить его в «Доверенные лица» — рядом с пакетом
+build кладёт готовый скрипт `Add-AppDevPackage.ps1`, который это делает.
 
 ## Настройка
 
@@ -56,12 +77,15 @@ HD-каналы рассыпаются.
 
 ## Данные приложения
 
-Всё лежит в `%LOCALAPPDATA%\IptvPlayer`:
+Всё лежит в `%LOCALAPPDATA%\Packages\IptvPlayer.Home_…\LocalState`:
 
 - `settings.json`, `session.json` — настройки и последняя сессия
 - `playlists.json`, `favorites.json` — плейлисты и избранное
 - `playlists/*.m3u`, `epg/*.xml`, `logos/` — кэш
 - `logs/app.log` — журнал с ротацией (5 файлов по 2 МБ)
+
+При первом запуске пакета настройки, плейлисты и избранное переносятся из папки
+`%LOCALAPPDATA%\IptvPlayer`, где их держала версия без упаковки.
 
 ## Управление
 

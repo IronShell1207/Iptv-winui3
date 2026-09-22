@@ -12,7 +12,7 @@ namespace IptvPlayer.Controls;
 /// Цвет берётся из Foreground, поэтому иконка следует теме и состоянию
 /// кнопки-родителя — в отличие от иконочного шрифта.
 /// </summary>
-public sealed class SvgIcon : UserControl
+public sealed partial class SvgIcon : UserControl
 {
     private const double DesignSize = 24;
 

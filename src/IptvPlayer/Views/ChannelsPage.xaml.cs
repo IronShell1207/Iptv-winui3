@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using IptvPlayer.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -5,7 +6,7 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace IptvPlayer.Views;
 
-public sealed partial class ChannelsPage : Page
+public sealed partial class ChannelsPage : Page, INotifyPropertyChanged
 {
     public ChannelsPage()
     {
@@ -26,8 +27,10 @@ public sealed partial class ChannelsPage : Page
     {
         base.OnNavigatedTo(e);
         ViewModel.RefreshEpgLabels();
-        Bindings.Update();
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
     }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     private void OnChannelClick(object sender, ItemClickEventArgs e)
     {

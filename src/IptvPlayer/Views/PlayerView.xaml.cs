@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Media;
 
 namespace IptvPlayer.Views;
 
-public sealed partial class PlayerView : UserControl
+public sealed partial class PlayerView : UserControl, INotifyPropertyChanged
 {
     private PlayerViewModel? _viewModel;
 
@@ -143,8 +143,14 @@ public sealed partial class PlayerView : UserControl
         }
     }
 
-    // x:Bind на свойства самого контрола обновляется через Bindings.Update
-    private void OnPropertyChangedLocal(string _) => Bindings.Update();
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>
+    /// Свойства контрола вычисляются из модели, поэтому при любом её изменении
+    /// проще пересчитать их все: пустое имя означает «обновить все привязки».
+    /// </summary>
+    private void OnPropertyChangedLocal(string _)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
 
     private void OnPointerMoved(object sender, PointerRoutedEventArgs e)
     {

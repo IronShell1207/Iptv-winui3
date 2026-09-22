@@ -545,7 +545,7 @@
 						<Grid>
 							<Ellipse Fill="#332E7CF6" />
 							<Ellipse
-								Margin="6"
+								Margin="0"
 								Stroke="{ThemeResource AppAccentBrush}"
 								StrokeThickness="2" />
 							<controls:SvgIcon
