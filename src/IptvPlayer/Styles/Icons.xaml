@@ -37,6 +37,7 @@
     <x:String x:Key="Icon.VolumeMute">M4 9.5h3.5L12 5.5v13L7.5 14.5H4Z M16 9.5l5 5 M21 9.5l-5 5</x:String>
     <x:String x:Key="Icon.Fullscreen">M4 9V4.5h5 M15 4.5h5V9 M20 15v4.5h-5 M9 19.5H4V15</x:String>
     <x:String x:Key="Icon.FullscreenExit">M9 4.5V9H4.5 M15 4.5V9h4.5 M15 19.5V15h4.5 M9 19.5V15H4.5</x:String>
+    <x:String x:Key="Icon.AspectRatio">M2.5 5.5h19v13h-19Z M7.5 9.5h9v5h-9Z</x:String>
     <x:String x:Key="Icon.Pip">M3 5.5h18v13H3Z M12.5 11.5h7v5.5h-7Z</x:String>
     <x:String x:Key="Icon.ChannelList">M4 6.5h16 M4 12h16 M4 17.5h10</x:String>
     <x:String x:Key="Icon.Live">M12 7.8A4.2 4.2 0 1 1 11.99 7.8Z</x:String>

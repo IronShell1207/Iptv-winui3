@@ -1,8 +1,11 @@
 using System.ComponentModel;
+using IptvPlayer.Core.Models;
 using IptvPlayer.ViewModels;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Media;
 
 namespace IptvPlayer.Views;
 
@@ -32,6 +35,7 @@ public sealed partial class PlayerView : UserControl
         UpdatePanelPosition();
         UpdateLayoutInsets();
         Bindings.Update();
+        ScrollToCurrentChannel();
     }
 
     public PlayerViewModel ViewModel => _viewModel ??= App.GetService<PlayerViewModel>();
@@ -59,6 +63,19 @@ public sealed partial class PlayerView : UserControl
 
     public string FullScreenGlyph => ViewModel.IsFullScreen ? "FullscreenExit" : "Fullscreen";
 
+    /// <summary>Режим вписывания кадра, выбранный кнопкой рядом с полноэкранным режимом.</summary>
+    public Stretch VideoStretch => ViewModel.VideoFit switch
+    {
+        VideoFitMode.Crop => Stretch.UniformToFill,
+        VideoFitMode.Stretch => Stretch.Fill,
+        VideoFitMode.Original => Stretch.None,
+        _ => Stretch.Uniform,
+    };
+
+    public string VideoFitTooltip => $"Картинка: {PlayerViewModel.DescribeFit(ViewModel.VideoFit)}";
+
+    public double ToastOpacity => ViewModel.Toast is null ? 0 : 1;
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
@@ -73,6 +90,11 @@ public sealed partial class PlayerView : UserControl
                 UpdatePanelPosition();
                 UpdateLayoutInsets();
                 OnPropertyChangedLocal(nameof(ChannelPanelOpacity));
+                if (ViewModel.IsChannelPanelOpen) ScrollToCurrentChannel();
+                break;
+
+            case nameof(PlayerViewModel.Current):
+                ScrollToCurrentChannel();
                 break;
             case nameof(PlayerViewModel.IsPlaying):
                 OnPropertyChangedLocal(nameof(PlayPauseGlyph));
@@ -83,6 +105,14 @@ public sealed partial class PlayerView : UserControl
                 break;
             case nameof(PlayerViewModel.IsFullScreen):
                 OnPropertyChangedLocal(nameof(FullScreenGlyph));
+                break;
+
+            case nameof(PlayerViewModel.VideoFit):
+                OnPropertyChangedLocal(nameof(VideoStretch));
+                break;
+
+            case nameof(PlayerViewModel.Toast):
+                OnPropertyChangedLocal(nameof(ToastOpacity));
                 break;
         }
     }
@@ -119,6 +149,29 @@ public sealed partial class PlayerView : UserControl
         Bindings.Update();
     }
 
+    /// <summary>
+    /// Подводит список к играющему каналу: панель открывается уже прокрученной
+    /// туда, где пользователь остановился, а не в начало списка.
+    /// </summary>
+    private void ScrollToCurrentChannel()
+    {
+        var current = ViewModel.Current;
+        if (current is null || !ViewModel.Channels.Channels.Contains(current)) return;
+
+        ChannelList.SelectedItem = current;
+
+        // первый проход попадает приблизительно: элементы виртуализованы и их высоты
+        // ещё не известны, поэтому повторяем после укладки
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            ChannelList.ScrollIntoView(current, ScrollIntoViewAlignment.Leading);
+            ChannelList.UpdateLayout();
+
+            DispatcherQueue.TryEnqueue(() =>
+                ChannelList.ScrollIntoView(current, ScrollIntoViewAlignment.Leading));
+        });
+    }
+
     private void UpdatePanelPosition()
         => ChannelPanel.Translation = ViewModel.IsChannelPanelOpen
             ? new System.Numerics.Vector3(0, 0, 0)
@@ -137,7 +190,29 @@ public sealed partial class PlayerView : UserControl
         => ViewModel.SetPointerOverChrome(false);
 
     private void OnDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
-        => ViewModel.ToggleFullScreenCommand.Execute(null);
+    {
+        // двойной щелчок разворачивает видео, но только если он пришёлся на кадр:
+        // по кнопкам и спискам люди щёлкают часто и быстро, и это не запрос полного экрана
+        if (IsChrome(e.OriginalSource as DependencyObject)) return;
+
+        ViewModel.ToggleFullScreenCommand.Execute(null);
+        e.Handled = true;
+    }
+
+    /// <summary>Принадлежит ли элемент панелям управления, а не области видео.</summary>
+    private bool IsChrome(DependencyObject? source)
+    {
+        for (var node = source; node is not null; node = VisualTreeHelper.GetParent(node))
+        {
+            if (node is ButtonBase or Slider or ComboBox or ListViewBase or TextBox or FlyoutPresenter)
+                return true;
+
+            if (ReferenceEquals(node, BottomBar) || ReferenceEquals(node, ChannelPanel))
+                return true;
+        }
+
+        return false;
+    }
 
     private async void OnChannelClick(object sender, ItemClickEventArgs e)
     {

@@ -96,6 +96,7 @@
                         <Setter Target="ClockTimeText.FontSize" Value="22" />
                         <Setter Target="MoreButton.Visibility" Value="Collapsed" />
                         <Setter Target="PipButton.Visibility" Value="Collapsed" />
+                        <Setter Target="VideoFitButton.Visibility" Value="Collapsed" />
                         <Setter Target="ControlsPanel.Spacing" Value="10" />
                     </VisualState.Setters>
                 </VisualState>
@@ -151,7 +152,7 @@
             x:Name="VideoElement"
             AreTransportControlsEnabled="False"
             IsHitTestVisible="False"
-            Stretch="Uniform" />
+            Stretch="{x:Bind VideoStretch, Mode=OneWay}" />
 
         <!-- Индикатор буферизации -->
         <StackPanel
@@ -231,6 +232,26 @@
                 Text="{x:Bind ViewModel.ClockDate, Mode=OneWay}" />
         </StackPanel>
 
+        <!-- Плашка режима картинки -->
+        <Border
+            Margin="0,96,32,0"
+            Padding="18,10"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Background="#B3000000"
+            CornerRadius="{StaticResource AppControlCornerRadius}"
+            IsHitTestVisible="False"
+            Opacity="{x:Bind ToastOpacity, Mode=OneWay}">
+            <Border.OpacityTransition>
+                <ScalarTransition Duration="0:0:0.2" />
+            </Border.OpacityTransition>
+            <TextBlock
+                FontSize="14"
+                FontWeight="SemiBold"
+                Foreground="White"
+                Text="{x:Bind ViewModel.Toast, Mode=OneWay}" />
+        </Border>
+
         <!-- Ввод номера канала -->
         <Border
             Padding="28,16"
@@ -246,6 +267,357 @@
                 Foreground="White"
                 Text="{x:Bind ViewModel.NumberOsd, Mode=OneWay}" />
         </Border>
+
+        <!-- Кнопки справа -->
+        <StackPanel
+            Margin="0,0,32,0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            IsHitTestVisible="{x:Bind ViewModel.AreControlsVisible, Mode=OneWay}"
+            Opacity="{x:Bind ChromeOpacity, Mode=OneWay}"
+            Spacing="12">
+            <StackPanel.OpacityTransition>
+                <ScalarTransition Duration="0:0:0.2" />
+            </StackPanel.OpacityTransition>
+            <Button
+                Width="48"
+                Height="48"
+                Command="{x:Bind ViewModel.ToggleFavoriteCommand}"
+                CornerRadius="24"
+                Style="{StaticResource GlassIconButtonStyle}"
+                ToolTipService.ToolTip="В избранное">
+                <controls:SvgIcon
+                    Width="20"
+                    Height="20"
+                    Foreground="White"
+                    Glyph="Favorites"
+                    IsFilled="{x:Bind ViewModel.IsFavorite, Mode=OneWay}" />
+            </Button>
+
+            <Button
+                Width="48"
+                Height="48"
+                Command="{x:Bind ViewModel.ToggleChannelPanelCommand}"
+                CornerRadius="24"
+                Style="{StaticResource GlassIconButtonStyle}"
+                ToolTipService.ToolTip="Список каналов">
+                <controls:SvgIcon
+                    Width="20"
+                    Height="20"
+                    Foreground="White"
+                    Glyph="ChannelList" />
+            </Button>
+
+            <Button
+                x:Name="PipButton"
+                Width="48"
+                Height="48"
+                Command="{x:Bind ViewModel.ToggleCompactOverlayCommand}"
+                CornerRadius="24"
+                Style="{StaticResource GlassIconButtonStyle}"
+                ToolTipService.ToolTip="Поверх окон">
+                <controls:SvgIcon
+                    Width="20"
+                    Height="20"
+                    Foreground="White"
+                    Glyph="Pip" />
+            </Button>
+        </StackPanel>
+
+        <!-- Нижняя панель -->
+        <Grid
+            x:Name="BottomBar"
+            VerticalAlignment="Bottom"
+            IsHitTestVisible="{x:Bind ViewModel.AreControlsVisible, Mode=OneWay}"
+            Opacity="{x:Bind ChromeOpacity, Mode=OneWay}"
+            PointerEntered="OnChromePointerEntered"
+            PointerExited="OnChromePointerExited">
+            <Grid.OpacityTransition>
+                <ScalarTransition Duration="0:0:0.2" />
+            </Grid.OpacityTransition>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.RowSpan="2">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Offset="0" Color="#00000000" />
+                        <GradientStop Offset="0.45" Color="#A6000000" />
+                        <GradientStop Offset="1" Color="#E6000000" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+
+            <!-- Информация о канале и передаче -->
+            <Grid
+                x:Name="InfoGrid"
+                Grid.Row="0"
+                Margin="{x:Bind InfoMargin, Mode=OneWay}"
+                ColumnSpacing="40">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Spacing="6">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Ellipse
+                            Width="9"
+                            Height="9"
+                            VerticalAlignment="Center"
+                            Fill="#EF4444" />
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="12"
+                            FontWeight="SemiBold"
+                            Foreground="White"
+                            Text="LIVE" />
+                    </StackPanel>
+
+                    <TextBlock
+                        x:Name="ChannelNameText"
+                        FontSize="34"
+                        FontWeight="SemiBold"
+                        Foreground="White"
+                        Text="{x:Bind ViewModel.ChannelName, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
+
+                    <TextBlock
+                        FontSize="17"
+                        Foreground="#CBD5E8"
+                        Text="{x:Bind ViewModel.NowTitle, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis"
+                        Visibility="{x:Bind ViewModel.HasEpg, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+
+                    <!-- Прогресс передачи -->
+                    <Grid
+                        Margin="0,12,0,0"
+                        Visibility="{x:Bind ViewModel.HasEpg, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <ProgressBar
+                            Height="4"
+                            Background="#33FFFFFF"
+                            CornerRadius="2"
+                            Foreground="{ThemeResource AppAccentBrush}"
+                            Maximum="1"
+                            Value="{x:Bind ViewModel.NowProgress, Mode=OneWay}" />
+
+                        <Grid Grid.Row="1" Margin="0,8,0,0">
+                            <TextBlock
+                                FontSize="12.5"
+                                Foreground="#9FB0CC"
+                                Text="{x:Bind ViewModel.NowStart, Mode=OneWay}" />
+                            <TextBlock
+                                HorizontalAlignment="Right"
+                                FontSize="12.5"
+                                Foreground="#9FB0CC"
+                                Text="{x:Bind ViewModel.NowStop, Mode=OneWay}" />
+                        </Grid>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Далее -->
+                <Border
+                    x:Name="NextBlock"
+                    Grid.Column="1"
+                    Padding="24,0,0,0"
+                    VerticalAlignment="Bottom"
+                    BorderBrush="#33FFFFFF"
+                    BorderThickness="1,0,0,0"
+                    Visibility="{x:Bind ShowNextBlock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel MaxWidth="240" Spacing="3">
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="#8FA2BF"
+                                Text="ДАЛЕЕ" />
+                            <TextBlock
+                                FontSize="16"
+                                FontWeight="SemiBold"
+                                Foreground="White"
+                                Text="{x:Bind ViewModel.NextTitle, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                FontSize="12.5"
+                                Foreground="#9FB0CC"
+                                Text="{x:Bind ViewModel.NextTimeRange, Mode=OneWay}" />
+                        </StackPanel>
+
+                        <controls:SvgIcon
+                            Grid.Column="1"
+                            Width="20"
+                            Height="20"
+                            VerticalAlignment="Center"
+                            Foreground="#8FA2BF"
+                            Glyph="ChevronRight" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Кнопки управления -->
+            <StackPanel
+                x:Name="ControlsPanel"
+                Grid.Row="1"
+                Margin="{x:Bind ControlsMargin, Mode=OneWay}"
+                HorizontalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="16">
+
+                <Button
+                    x:Name="MoreButton"
+                    Width="48"
+                    Height="48"
+                    Click="OnMoreClick"
+                    CornerRadius="24"
+                    Style="{StaticResource GlassIconButtonStyle}"
+                    ToolTipService.ToolTip="Ещё">
+                    <controls:SvgIcon
+                        Width="20"
+                        Height="20"
+                        Foreground="White"
+                        Glyph="More" />
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Click="OnCloseClick" Text="Закрыть плеер" />
+                            <MenuFlyoutItem Click="OnRefreshStreamClick" Text="Переподключиться" />
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+
+                <Button
+                    x:Name="ChannelListButton"
+                    Width="48"
+                    Height="48"
+                    Command="{x:Bind ViewModel.ToggleChannelPanelCommand}"
+                    CornerRadius="24"
+                    Style="{StaticResource GlassIconButtonStyle}"
+                    ToolTipService.ToolTip="Список каналов">
+                    <controls:SvgIcon
+                        Width="20"
+                        Height="20"
+                        Foreground="White"
+                        Glyph="ChannelList" />
+                </Button>
+
+                <Button
+                    Width="52"
+                    Height="52"
+                    Command="{x:Bind ViewModel.PreviousChannelCommand}"
+                    CornerRadius="26"
+                    Style="{StaticResource GlassIconButtonStyle}"
+                    ToolTipService.ToolTip="Предыдущий канал">
+                    <controls:SvgIcon
+                        Width="20"
+                        Height="20"
+                        Foreground="White"
+                        Glyph="Previous" />
+                </Button>
+
+                <!-- Главная кнопка -->
+                <Grid Width="76" Height="76">
+                    <Ellipse Fill="#332E7CF6" />
+                    <Ellipse
+                        Margin="6"
+                        Stroke="{ThemeResource AppAccentBrush}"
+                        StrokeThickness="2" />
+                    <Button
+                        Width="64"
+                        Height="64"
+                        Background="#1A2E7CF6"
+                        BorderThickness="0"
+                        Command="{x:Bind ViewModel.TogglePlayPauseCommand}"
+                        CornerRadius="32"
+                        Padding="0">
+                        <controls:SvgIcon
+                            Width="26"
+                            Height="26"
+                            Foreground="{ThemeResource AppAccentHoverBrush}"
+                            Glyph="{x:Bind PlayPauseGlyph, Mode=OneWay}" />
+                    </Button>
+                </Grid>
+
+                <Button
+                    Width="52"
+                    Height="52"
+                    Command="{x:Bind ViewModel.NextChannelCommand}"
+                    CornerRadius="26"
+                    Style="{StaticResource GlassIconButtonStyle}"
+                    ToolTipService.ToolTip="Следующий канал">
+                    <controls:SvgIcon
+                        Width="20"
+                        Height="20"
+                        Foreground="White"
+                        Glyph="Next" />
+                </Button>
+
+                <Button
+                    Width="48"
+                    Height="48"
+                    CornerRadius="24"
+                    Style="{StaticResource GlassIconButtonStyle}"
+                    ToolTipService.ToolTip="Громкость">
+                    <controls:SvgIcon
+                        Width="20"
+                        Height="20"
+                        Foreground="White"
+                        Glyph="{x:Bind VolumeGlyph, Mode=OneWay}" />
+                    <Button.Flyout>
+                        <Flyout>
+                            <StackPanel Width="220" Spacing="10">
+                                <Slider
+                                    Maximum="100"
+                                    Minimum="0"
+                                    Value="{x:Bind ViewModel.Volume, Mode=TwoWay}" />
+                                <ToggleButton
+                                    HorizontalAlignment="Stretch"
+                                    Content="Без звука"
+                                    IsChecked="{x:Bind ViewModel.IsMuted, Mode=TwoWay}" />
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+
+                <Button
+                    x:Name="VideoFitButton"
+                    Width="48"
+                    Height="48"
+                    Command="{x:Bind ViewModel.CycleVideoFitCommand}"
+                    CornerRadius="24"
+                    Style="{StaticResource GlassIconButtonStyle}"
+                    ToolTipService.ToolTip="{x:Bind VideoFitTooltip, Mode=OneWay}">
+                    <controls:SvgIcon
+                        Width="20"
+                        Height="20"
+                        Foreground="White"
+                        Glyph="AspectRatio" />
+                </Button>
+
+                <Button
+                    Width="48"
+                    Height="48"
+                    Command="{x:Bind ViewModel.ToggleFullScreenCommand}"
+                    CornerRadius="24"
+                    Style="{StaticResource GlassIconButtonStyle}"
+                    ToolTipService.ToolTip="Во весь экран">
+                    <controls:SvgIcon
+                        Width="20"
+                        Height="20"
+                        Foreground="White"
+                        Glyph="{x:Bind FullScreenGlyph, Mode=OneWay}" />
+                </Button>
+            </StackPanel>
+        </Grid>
 
         <!-- Горячая зона у левого края: подводишь курсор — выезжает список каналов -->
         <Border
@@ -418,325 +790,5 @@
                 </Grid>
             </Grid>
         </Border>
-
-        <!-- Кнопки справа -->
-        <StackPanel
-            Margin="0,0,32,0"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            IsHitTestVisible="{x:Bind ViewModel.AreControlsVisible, Mode=OneWay}"
-            Opacity="{x:Bind ChromeOpacity, Mode=OneWay}"
-            Spacing="12">
-            <StackPanel.OpacityTransition>
-                <ScalarTransition Duration="0:0:0.2" />
-            </StackPanel.OpacityTransition>
-            <Button
-                Width="48"
-                Height="48"
-                Command="{x:Bind ViewModel.ToggleFavoriteCommand}"
-                CornerRadius="24"
-                Style="{StaticResource GlassIconButtonStyle}"
-                ToolTipService.ToolTip="В избранное">
-                <controls:SvgIcon
-                    Width="20"
-                    Height="20"
-                    Foreground="White"
-                    Glyph="Favorites"
-                    IsFilled="{x:Bind ViewModel.IsFavorite, Mode=OneWay}" />
-            </Button>
-
-            <Button
-                Width="48"
-                Height="48"
-                Command="{x:Bind ViewModel.ToggleChannelPanelCommand}"
-                CornerRadius="24"
-                Style="{StaticResource GlassIconButtonStyle}"
-                ToolTipService.ToolTip="Список каналов">
-                <controls:SvgIcon
-                    Width="20"
-                    Height="20"
-                    Foreground="White"
-                    Glyph="ChannelList" />
-            </Button>
-
-            <Button
-                x:Name="PipButton"
-                Width="48"
-                Height="48"
-                Command="{x:Bind ViewModel.ToggleCompactOverlayCommand}"
-                CornerRadius="24"
-                Style="{StaticResource GlassIconButtonStyle}"
-                ToolTipService.ToolTip="Поверх окон">
-                <controls:SvgIcon
-                    Width="20"
-                    Height="20"
-                    Foreground="White"
-                    Glyph="Pip" />
-            </Button>
-        </StackPanel>
-
-        <!-- Нижняя панель -->
-        <Grid
-            VerticalAlignment="Bottom"
-            IsHitTestVisible="{x:Bind ViewModel.AreControlsVisible, Mode=OneWay}"
-            Opacity="{x:Bind ChromeOpacity, Mode=OneWay}"
-            PointerEntered="OnChromePointerEntered"
-            PointerExited="OnChromePointerExited">
-            <Grid.OpacityTransition>
-                <ScalarTransition Duration="0:0:0.2" />
-            </Grid.OpacityTransition>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <Border Grid.RowSpan="2">
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Offset="0" Color="#00000000" />
-                        <GradientStop Offset="0.45" Color="#A6000000" />
-                        <GradientStop Offset="1" Color="#E6000000" />
-                    </LinearGradientBrush>
-                </Border.Background>
-            </Border>
-
-            <!-- Информация о канале и передаче -->
-            <Grid
-                x:Name="InfoGrid"
-                Grid.Row="0"
-                Margin="{x:Bind InfoMargin, Mode=OneWay}"
-                ColumnSpacing="40">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Spacing="6">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Ellipse
-                            Width="9"
-                            Height="9"
-                            VerticalAlignment="Center"
-                            Fill="#EF4444" />
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            FontSize="12"
-                            FontWeight="SemiBold"
-                            Foreground="White"
-                            Text="LIVE" />
-                    </StackPanel>
-
-                    <TextBlock
-                        x:Name="ChannelNameText"
-                        FontSize="34"
-                        FontWeight="SemiBold"
-                        Foreground="White"
-                        Text="{x:Bind ViewModel.ChannelName, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis" />
-
-                    <TextBlock
-                        FontSize="17"
-                        Foreground="#CBD5E8"
-                        Text="{x:Bind ViewModel.NowTitle, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis"
-                        Visibility="{x:Bind ViewModel.HasEpg, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-
-                    <!-- Прогресс передачи -->
-                    <Grid
-                        Margin="0,12,0,0"
-                        Visibility="{x:Bind ViewModel.HasEpg, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <ProgressBar
-                            Height="4"
-                            Background="#33FFFFFF"
-                            CornerRadius="2"
-                            Foreground="{ThemeResource AppAccentBrush}"
-                            Maximum="1"
-                            Value="{x:Bind ViewModel.NowProgress, Mode=OneWay}" />
-
-                        <Grid Grid.Row="1" Margin="0,8,0,0">
-                            <TextBlock
-                                FontSize="12.5"
-                                Foreground="#9FB0CC"
-                                Text="{x:Bind ViewModel.NowStart, Mode=OneWay}" />
-                            <TextBlock
-                                HorizontalAlignment="Right"
-                                FontSize="12.5"
-                                Foreground="#9FB0CC"
-                                Text="{x:Bind ViewModel.NowStop, Mode=OneWay}" />
-                        </Grid>
-                    </Grid>
-                </StackPanel>
-
-                <!-- Далее -->
-                <Border
-                    x:Name="NextBlock"
-                    Grid.Column="1"
-                    Padding="24,0,0,0"
-                    VerticalAlignment="Bottom"
-                    BorderBrush="#33FFFFFF"
-                    BorderThickness="1,0,0,0"
-                    Visibility="{x:Bind ShowNextBlock, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
-                    <Grid ColumnSpacing="16">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel MaxWidth="240" Spacing="3">
-                            <TextBlock
-                                FontSize="11"
-                                Foreground="#8FA2BF"
-                                Text="ДАЛЕЕ" />
-                            <TextBlock
-                                FontSize="16"
-                                FontWeight="SemiBold"
-                                Foreground="White"
-                                Text="{x:Bind ViewModel.NextTitle, Mode=OneWay}"
-                                TextTrimming="CharacterEllipsis" />
-                            <TextBlock
-                                FontSize="12.5"
-                                Foreground="#9FB0CC"
-                                Text="{x:Bind ViewModel.NextTimeRange, Mode=OneWay}" />
-                        </StackPanel>
-
-                        <controls:SvgIcon
-                            Grid.Column="1"
-                            Width="20"
-                            Height="20"
-                            VerticalAlignment="Center"
-                            Foreground="#8FA2BF"
-                            Glyph="ChevronRight" />
-                    </Grid>
-                </Border>
-            </Grid>
-
-            <!-- Кнопки управления -->
-            <StackPanel
-                x:Name="ControlsPanel"
-                Grid.Row="1"
-                Margin="{x:Bind ControlsMargin, Mode=OneWay}"
-                HorizontalAlignment="Center"
-                Orientation="Horizontal"
-                Spacing="16">
-
-                <Button
-                    x:Name="MoreButton"
-                    Width="48"
-                    Height="48"
-                    Click="OnMoreClick"
-                    CornerRadius="24"
-                    Style="{StaticResource GlassIconButtonStyle}"
-                    ToolTipService.ToolTip="Ещё">
-                    <controls:SvgIcon
-                        Width="20"
-                        Height="20"
-                        Foreground="White"
-                        Glyph="More" />
-                    <Button.Flyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem Click="OnCloseClick" Text="Закрыть плеер" />
-                            <MenuFlyoutItem Click="OnRefreshStreamClick" Text="Переподключиться" />
-                        </MenuFlyout>
-                    </Button.Flyout>
-                </Button>
-
-                <Button
-                    Width="52"
-                    Height="52"
-                    Command="{x:Bind ViewModel.PreviousChannelCommand}"
-                    CornerRadius="26"
-                    Style="{StaticResource GlassIconButtonStyle}"
-                    ToolTipService.ToolTip="Предыдущий канал">
-                    <controls:SvgIcon
-                        Width="20"
-                        Height="20"
-                        Foreground="White"
-                        Glyph="Previous" />
-                </Button>
-
-                <!-- Главная кнопка -->
-                <Grid Width="76" Height="76">
-                    <Ellipse Fill="#332E7CF6" />
-                    <Ellipse
-                        Margin="6"
-                        Stroke="{ThemeResource AppAccentBrush}"
-                        StrokeThickness="2" />
-                    <Button
-                        Width="64"
-                        Height="64"
-                        Background="#1A2E7CF6"
-                        BorderThickness="0"
-                        Command="{x:Bind ViewModel.TogglePlayPauseCommand}"
-                        CornerRadius="32"
-                        Padding="0">
-                        <controls:SvgIcon
-                            Width="26"
-                            Height="26"
-                            Foreground="{ThemeResource AppAccentHoverBrush}"
-                            Glyph="{x:Bind PlayPauseGlyph, Mode=OneWay}" />
-                    </Button>
-                </Grid>
-
-                <Button
-                    Width="52"
-                    Height="52"
-                    Command="{x:Bind ViewModel.NextChannelCommand}"
-                    CornerRadius="26"
-                    Style="{StaticResource GlassIconButtonStyle}"
-                    ToolTipService.ToolTip="Следующий канал">
-                    <controls:SvgIcon
-                        Width="20"
-                        Height="20"
-                        Foreground="White"
-                        Glyph="Next" />
-                </Button>
-
-                <Button
-                    Width="48"
-                    Height="48"
-                    CornerRadius="24"
-                    Style="{StaticResource GlassIconButtonStyle}"
-                    ToolTipService.ToolTip="Громкость">
-                    <controls:SvgIcon
-                        Width="20"
-                        Height="20"
-                        Foreground="White"
-                        Glyph="{x:Bind VolumeGlyph, Mode=OneWay}" />
-                    <Button.Flyout>
-                        <Flyout>
-                            <StackPanel Width="220" Spacing="10">
-                                <Slider
-                                    Maximum="100"
-                                    Minimum="0"
-                                    Value="{x:Bind ViewModel.Volume, Mode=TwoWay}" />
-                                <ToggleButton
-                                    HorizontalAlignment="Stretch"
-                                    Content="Без звука"
-                                    IsChecked="{x:Bind ViewModel.IsMuted, Mode=TwoWay}" />
-                            </StackPanel>
-                        </Flyout>
-                    </Button.Flyout>
-                </Button>
-
-                <Button
-                    Width="48"
-                    Height="48"
-                    Command="{x:Bind ViewModel.ToggleFullScreenCommand}"
-                    CornerRadius="24"
-                    Style="{StaticResource GlassIconButtonStyle}"
-                    ToolTipService.ToolTip="Во весь экран">
-                    <controls:SvgIcon
-                        Width="20"
-                        Height="20"
-                        Foreground="White"
-                        Glyph="{x:Bind FullScreenGlyph, Mode=OneWay}" />
-                </Button>
-            </StackPanel>
-        </Grid>
     </Grid>
 </UserControl>

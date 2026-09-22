@@ -32,6 +32,7 @@ public sealed partial class PlayerViewModel : ObservableObject
     private DispatcherQueueTimer? _hideTimer;
     private DispatcherQueueTimer? _tickTimer;
     private DispatcherQueueTimer? _numberTimer;
+    private DispatcherQueueTimer? _toastTimer;
     private string _numberBuffer = string.Empty;
     private bool _pointerOverChrome;
 
@@ -51,6 +52,7 @@ public sealed partial class PlayerViewModel : ObservableObject
 
         Volume = _settings.Current.Volume;
         IsMuted = _settings.Current.IsMuted;
+        VideoFit = _settings.Current.VideoFit;
 
         StartTimers();
     }
@@ -98,6 +100,14 @@ public sealed partial class PlayerViewModel : ObservableObject
 
     [ObservableProperty]
     public partial string? NumberOsd { get; set; }
+
+    /// <summary>Как кадр вписывается в окно.</summary>
+    [ObservableProperty]
+    public partial VideoFitMode VideoFit { get; set; }
+
+    /// <summary>Короткая плашка в углу: показывает, что именно переключили.</summary>
+    [ObservableProperty]
+    public partial string? Toast { get; set; }
 
     [ObservableProperty]
     public partial string ClockTime { get; set; } = DateTime.Now.ToString("HH:mm");
@@ -164,6 +174,12 @@ public sealed partial class PlayerViewModel : ObservableObject
 
     partial void OnIsMutedChanged(bool value) => _playback.IsMuted = value;
 
+    partial void OnVideoFitChanged(VideoFitMode value)
+    {
+        _ = _settings.UpdateAsync(s => s with { VideoFit = value });
+        ShowToast(DescribeFit(value));
+    }
+
     partial void OnIsFullScreenChanged(bool value) => FullScreenRequested?.Invoke(this, value);
 
     partial void OnIsCompactOverlayChanged(bool value) => CompactOverlayRequested?.Invoke(this, value);
@@ -216,6 +232,38 @@ public sealed partial class PlayerViewModel : ObservableObject
 
     [RelayCommand]
     private void ToggleFullScreen() => IsFullScreen = !IsFullScreen;
+
+    /// <summary>Перебирает режимы вписывания кадра по кругу.</summary>
+    [RelayCommand]
+    private void CycleVideoFit()
+    {
+        VideoFit = VideoFit switch
+        {
+            VideoFitMode.Fit => VideoFitMode.Crop,
+            VideoFitMode.Crop => VideoFitMode.Stretch,
+            VideoFitMode.Stretch => VideoFitMode.Original,
+            _ => VideoFitMode.Fit,
+        };
+
+        ShowControls();
+    }
+
+    public static string DescribeFit(VideoFitMode mode) => mode switch
+    {
+        VideoFitMode.Fit => "По размеру окна",
+        VideoFitMode.Crop => "Заполнить с обрезкой",
+        VideoFitMode.Stretch => "Растянуть на всё окно",
+        _ => "Оригинальный размер",
+    };
+
+    private void ShowToast(string message)
+    {
+        Toast = message;
+
+        _toastTimer ??= CreateTimer(TimeSpan.FromSeconds(1.8), () => Toast = null, repeat: false);
+        _toastTimer.Stop();
+        _toastTimer.Start();
+    }
 
     [RelayCommand]
     private void ToggleCompactOverlay() => IsCompactOverlay = !IsCompactOverlay;

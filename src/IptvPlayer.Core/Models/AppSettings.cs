@@ -26,6 +26,9 @@ public sealed record AppSettings
     /// <summary>Буфер упреждающего чтения, мс.</summary>
     public int BufferMilliseconds { get; init; } = 1500;
     public bool HardwareDecoding { get; init; } = true;
+
+    /// <summary>Режим вписывания кадра, выбранный кнопкой в плеере.</summary>
+    public VideoFitMode VideoFit { get; init; } = VideoFitMode.Fit;
     public bool DownmixToStereo { get; init; } = true;
 
     /// <summary>Время жизни кэша EPG, часов.</summary>
