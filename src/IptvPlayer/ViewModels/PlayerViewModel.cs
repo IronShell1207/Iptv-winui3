@@ -302,12 +302,92 @@ public sealed partial class PlayerViewModel : ObservableObject
     private string ResolveUrl(Channel channel) => StreamUrlResolver.Resolve(
         channel.Url, _settings.Current.SourceMode, _settings.Current.UdpxyBaseUrl);
 
+    /// <summary>
+    /// Пауза живого эфира. Поток продолжает писаться в буфер, поэтому продолжаем
+    /// ровно с того места, где остановились, а не с обрыва.
+    /// </summary>
     [RelayCommand]
-    private void TogglePlayPause()
+    private async Task TogglePlayPause()
     {
-        _playback.TogglePlayPause();
         ShowControls();
+
+        if (IsPlaying)
+        {
+            PauseLive();
+            return;
+        }
+
+        await ResumeAsync();
     }
+
+    private void PauseLive()
+    {
+        _playback.Pause();
+
+        // у записи и так есть перемотка, буфер ей не нужен
+        if (IsRecordingPlayback || Current is null) return;
+
+        _pausedAt = CurrentAirTime;
+
+        if (_timeshift.IsRunning)
+        {
+            PauseCaption = $"Пауза · эфир пишется с {_pausedAt:HH:mm:ss}";
+            return;
+        }
+
+        if (!_settings.Current.PauseCacheEnabled)
+        {
+            _pausedAt = null;
+            PauseCaption = "Пауза";
+            return;
+        }
+
+        // буфер поднят только ради паузы: после возврата в эфир его выключим
+        _bufferOwnedByPause = true;
+        _timeshift.Depth = TimeSpan.FromMinutes(Math.Clamp(_settings.Current.PauseCacheMinutes, 5, 240));
+        _timeshift.Start(Current.Channel, ResolveUrl(Current.Channel));
+
+        PauseCaption = $"Пауза · эфир пишется с {_pausedAt:HH:mm:ss}";
+    }
+
+    private async Task ResumeAsync()
+    {
+        PauseCaption = null;
+
+        if (_pausedAt is not { } paused || !_timeshift.IsRunning)
+        {
+            _playback.Resume();
+            return;
+        }
+
+        var resumeFrom = TimeshiftService.ResumePoint(paused, _timeshift.Earliest, DateTimeOffset.Now);
+        var located = _timeshift.Locate(resumeFrom);
+
+        if (located is null)
+        {
+            // за паузу ничего не накопилось — возвращаемся в прямой эфир
+            _playback.Resume();
+            return;
+        }
+
+        await _playback.PlayFileAsync(located.Value.Segment.Path, located.Value.Offset);
+
+        _timeshiftBase = located.Value.Segment.StartedAt;
+        IsTimeshifted = true;
+        UpdateTimeshiftCaption();
+
+        if (resumeFrom > paused)
+            ShowToast($"Пауза была долгой — продолжаем с {resumeFrom:HH:mm}");
+
+        _pausedAt = null;
+    }
+
+    /// <summary>Подпись на паузе: видно, что эфир не потерян.</summary>
+    [ObservableProperty]
+    public partial string? PauseCaption { get; set; }
+
+    private DateTimeOffset? _pausedAt;
+    private bool _bufferOwnedByPause;
 
     [RelayCommand]
     private Task NextChannel() => SwitchAsync(+1);
@@ -539,8 +619,17 @@ public sealed partial class PlayerViewModel : ObservableObject
 
         IsTimeshifted = false;
         TimeshiftCaption = null;
+        _pausedAt = null;
 
         await _playback.PlayAsync(Current.Channel);
+
+        // буфер, поднятый ради паузы, дальше не нужен
+        if (_bufferOwnedByPause && !_settings.Current.TimeshiftEnabled)
+        {
+            _bufferOwnedByPause = false;
+            _timeshift.Stop();
+        }
+
         ShowControls();
     }
 
@@ -586,6 +675,9 @@ public sealed partial class PlayerViewModel : ObservableObject
         IsChannelPanelOpen = false;
         IsTimeshifted = false;
         TimeshiftCaption = null;
+        PauseCaption = null;
+        _pausedAt = null;
+        _bufferOwnedByPause = false;
         _timeshift.Stop();
 
         _playback.Stop();

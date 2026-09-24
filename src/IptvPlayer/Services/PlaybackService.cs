@@ -270,6 +270,8 @@ public sealed class PlaybackService : IDisposable
 
             old?.Dispose();
             RequestDisplayActive();
+
+            _log.LogInformation("Открыт файл {Path} с позиции {Position}", path, startAt);
         }
         catch (OperationCanceledException)
         {

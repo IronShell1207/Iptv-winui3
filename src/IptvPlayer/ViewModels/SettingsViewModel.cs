@@ -61,6 +61,12 @@ public sealed partial class SettingsViewModel : ObservableObject
     public partial int RecordingPaddingMinutes { get; set; } = 3;
 
     [ObservableProperty]
+    public partial bool PauseCacheEnabled { get; set; } = true;
+
+    [ObservableProperty]
+    public partial int PauseCacheMinutes { get; set; } = 30;
+
+    [ObservableProperty]
     public partial bool TimeshiftEnabled { get; set; }
 
     [ObservableProperty]
@@ -99,6 +105,8 @@ public sealed partial class SettingsViewModel : ObservableObject
             ? AppPaths.DefaultRecordingsFolder
             : s.RecordingsFolder;
         RecordingPaddingMinutes = s.RecordingPaddingMinutes;
+        PauseCacheEnabled = s.PauseCacheEnabled;
+        PauseCacheMinutes = s.PauseCacheMinutes;
         TimeshiftEnabled = s.TimeshiftEnabled;
         TimeshiftMinutes = s.TimeshiftMinutes;
 
@@ -125,6 +133,8 @@ public sealed partial class SettingsViewModel : ObservableObject
             LogLevel = LogLevel,
             RecordingsFolder = RecordingsFolder,
             RecordingPaddingMinutes = Math.Clamp(RecordingPaddingMinutes, 0, 30),
+            PauseCacheEnabled = PauseCacheEnabled,
+            PauseCacheMinutes = Math.Clamp(PauseCacheMinutes, 5, 240),
             TimeshiftEnabled = TimeshiftEnabled,
             TimeshiftMinutes = Math.Clamp(TimeshiftMinutes, 5, 240),
         });
@@ -142,8 +152,15 @@ public sealed partial class SettingsViewModel : ObservableObject
     partial void OnLogLevelChanged(string value) => Save();
     partial void OnRecordingsFolderChanged(string value) => Save();
     partial void OnRecordingPaddingMinutesChanged(int value) => Save();
+    partial void OnPauseCacheEnabledChanged(bool value) => Save();
+    partial void OnPauseCacheMinutesChanged(int value) => Save();
     partial void OnTimeshiftEnabledChanged(bool value) => Save();
     partial void OnTimeshiftMinutesChanged(int value) => Save();
+
+    public string PauseCacheHint =>
+        "На паузе эфир продолжает писаться на диск, поэтому после продолжения "
+        + "вы увидите то, что пропустили, а не обрыв. Пока идёт пауза, канал "
+        + "приходит с роутера вторым потоком.";
 
     public string TimeshiftHint =>
         "Буфер пишется вторым соединением к udpxy, поэтому канал идёт с роутера дважды. "

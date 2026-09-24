@@ -37,6 +37,12 @@ public sealed record AppSettings
     /// <summary>Запас после конца передачи при записи по телепрограмме, минут.</summary>
     public int RecordingPaddingMinutes { get; init; } = 3;
 
+    /// <summary>На паузе продолжать писать эфир, чтобы продолжить с того же места.</summary>
+    public bool PauseCacheEnabled { get; init; } = true;
+
+    /// <summary>Сколько эфира копить на паузе, минут.</summary>
+    public int PauseCacheMinutes { get; init; } = 30;
+
     /// <summary>Писать эфир в буфер, чтобы его можно было отмотать назад.</summary>
     public bool TimeshiftEnabled { get; init; }
 

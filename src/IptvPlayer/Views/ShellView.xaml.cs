@@ -39,9 +39,9 @@ public sealed partial class ShellView : UserControl
         _channels.ChannelActivated += OnChannelActivated;
         _player.CloseRequested += OnPlayerCloseRequested;
 
-        // handledEventsToo: список каналов забирает стрелки и пробел себе,
-        // а плееру они нужны как горячие клавиши
-        AddHandler(KeyDownEvent, new KeyEventHandler(OnKeyDown), handledEventsToo: true);
+        // PreviewKeyDown: список каналов забирает пробел себе и активирует канал,
+        // поэтому горячие клавиши плеера перехватываем раньше него
+        AddHandler(PreviewKeyDownEvent, new KeyEventHandler(OnKeyDown), handledEventsToo: true);
         Loaded += OnLoaded;
     }
 

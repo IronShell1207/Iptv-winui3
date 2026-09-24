@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IptvPlayer.Core.Models;
 using IptvPlayer.Core.Services;
+using Microsoft.UI.Dispatching;
 
 namespace IptvPlayer.ViewModels;
 
@@ -37,12 +38,14 @@ public sealed partial class EpgViewModel : ObservableObject
 {
     private readonly EpgService _epg;
     private readonly ChannelsViewModel _channels;
+    private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
 
     public EpgViewModel(EpgService epg, ChannelsViewModel channels)
     {
         _epg = epg;
         _channels = channels;
-        _epg.Updated += (_, _) => Reload();
+        // телепрограмма догружается в фоне, а коллекцию можно трогать только из UI-потока
+        _epg.Updated += (_, _) => _dispatcher.TryEnqueue(Reload);
     }
 
     public ObservableCollection<EpgSlotViewModel> Slots { get; } = new();

@@ -72,6 +72,11 @@ public sealed class TimeshiftService : IDisposable
     public void Stop()
     {
         _cts?.Cancel();
+
+        // даём записи закрыть файл, иначе удалить его не выйдет
+        try { _worker?.Wait(TimeSpan.FromSeconds(2)); }
+        catch (AggregateException) { /* запись прервана, это и требовалось */ }
+
         _cts?.Dispose();
         _cts = null;
         _worker = null;
@@ -135,6 +140,19 @@ public sealed class TimeshiftService : IDisposable
 
     /// <summary>Самый старый момент, который ещё можно посмотреть.</summary>
     public DateTimeOffset? Earliest => _segments.Count == 0 ? null : _segments[0].StartedAt;
+
+    /// <summary>
+    /// С какого момента продолжить после паузы. Если пауза затянулась и начало
+    /// уже вытеснено из буфера, продолжаем с самого старого, что уцелело.
+    /// </summary>
+    public static DateTimeOffset ResumePoint(
+        DateTimeOffset pausedAt, DateTimeOffset? earliest, DateTimeOffset now)
+    {
+        if (pausedAt > now) return now;
+        if (earliest is { } oldest && pausedAt < oldest) return oldest;
+
+        return pausedAt;
+    }
 
     private void Trim()
     {

@@ -152,6 +152,33 @@
                     </StackPanel>
 
                     <ToggleSwitch
+                        Header="Копить эфир на паузе"
+                        IsOn="{x:Bind ViewModel.PauseCacheEnabled, Mode=TwoWay}"
+                        OffContent="Выключено"
+                        OnContent="Включено" />
+
+                    <StackPanel Spacing="8">
+                        <Grid>
+                            <TextBlock Foreground="{ThemeResource AppTextSecondaryBrush}" Text="Сколько копить на паузе, минут" />
+                            <TextBlock
+                                HorizontalAlignment="Right"
+                                Foreground="{ThemeResource AppTextPrimaryBrush}"
+                                Text="{x:Bind ViewModel.PauseCacheMinutes, Mode=OneWay}" />
+                        </Grid>
+                        <Slider
+                            Maximum="180"
+                            Minimum="5"
+                            StepFrequency="5"
+                            TickFrequency="35"
+                            Value="{x:Bind ViewModel.PauseCacheMinutes, Mode=TwoWay}" />
+                        <TextBlock
+                            FontSize="12.5"
+                            Foreground="{ThemeResource AppTextTertiaryBrush}"
+                            Text="{x:Bind ViewModel.PauseCacheHint}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <ToggleSwitch
                         Header="Буфер отмотки назад"
                         IsOn="{x:Bind ViewModel.TimeshiftEnabled, Mode=TwoWay}"
                         OffContent="Выключен"

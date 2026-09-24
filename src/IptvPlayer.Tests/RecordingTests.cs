@@ -103,3 +103,40 @@ public class RecordingTests
         Assert.Equal(TimeSpan.FromMinutes(15), recording.Duration);
     }
 }
+
+/// <summary>Пауза живого эфира: продолжаем с того момента, где остановились.</summary>
+public class PauseCacheTests
+{
+    private static readonly DateTimeOffset Now = new(2026, 9, 25, 20, 0, 0, TimeSpan.FromHours(3));
+
+    [Fact]
+    public void ResumesExactlyWherePaused()
+    {
+        var paused = Now.AddMinutes(-4);
+
+        var point = TimeshiftService.ResumePoint(paused, Now.AddMinutes(-30), Now);
+
+        Assert.Equal(paused, point);
+    }
+
+    [Fact]
+    public void LongPauseResumesFromOldestSurvivingMoment()
+    {
+        var paused = Now.AddHours(-3);
+        var earliest = Now.AddMinutes(-30);
+
+        var point = TimeshiftService.ResumePoint(paused, earliest, Now);
+
+        Assert.Equal(earliest, point);
+    }
+
+    [Fact]
+    public void WithoutBufferResumesFromPauseMoment()
+        => Assert.Equal(
+            Now.AddMinutes(-2),
+            TimeshiftService.ResumePoint(Now.AddMinutes(-2), earliest: null, Now));
+
+    [Fact]
+    public void ClockSkewNeverSendsUsIntoTheFuture()
+        => Assert.Equal(Now, TimeshiftService.ResumePoint(Now.AddMinutes(5), null, Now));
+}
